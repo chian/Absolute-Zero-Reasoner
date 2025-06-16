@@ -225,3 +225,36 @@ def get_pred_code_io_data(
     df = pd.DataFrame(return_io_data)
     df.to_parquet(output_path)
 
+
+def get_gen_bio_bvbrc_prompt(user_query: str) -> dict:
+    """
+    Generate a prompt for biological reasoning with <think> and <action> tags.
+    The LLM/agent is expected to fill in the reasoning and actions.
+    """
+    example = '''
+User Query: List all Pseudomonas aeruginosa genome IDs.
+<think>
+First, identify the relevant collection and fields. Use the genome collection and filter by genus and species.
+</think>
+<action>
+[
+    "curl -s \"https://www.bv-brc.org/api-bulk/genome/?and(eq(genus,Pseudomonas),eq(species,aeruginosa))&select(genome_id)\""
+]
+</action>
+'''
+    prompt = f"""You are a biological reasoning assistant. Given the following user query, think step by step and then output a list of shell commands (e.g., curl commands) needed to solve the problem. Wrap your reasoning in <think> tags and your commands in <action> tags. Use a Python list of strings for the commands inside <action>.
+
+Example:
+{example}
+
+Now, answer the following:
+User Query: {user_query}
+<think>
+"""
+    return {
+        "data_source": "gen_bio_bvbrc",
+        "prompt": [{"role": "user", "content": prompt}],
+        "problem": user_query,
+        "ability": "bio_bvbrc"
+    }
+

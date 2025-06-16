@@ -196,6 +196,15 @@ def remove_print_statements(code: str) -> str:
     return ast.unparse(tree)
 
 
+def extract_actions_from_prompt(prompt: str):
+    action_pattern = re.compile(r'<action>\s*(.*?)\s*</action>', re.DOTALL | re.IGNORECASE)
+    action_contents = action_pattern.findall(prompt)
+    if not action_contents:
+        return []
+    actions = eval(action_contents[0]) if action_contents[0].strip().startswith('[') else [action_contents[0].strip()]
+    return actions
+
+
 if __name__ == "__main__":
     print(parse_error("NameError: name 'x' is not defined"))
     print(parse_error("TypeError: unsupported operand type(s) for -: 'str' and 'str'"))

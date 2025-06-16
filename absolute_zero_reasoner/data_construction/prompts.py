@@ -290,7 +290,7 @@ code_suffix = "\nf(<|YOUR INPUT WILL BE PLUGGED HERE|>)"
 
 code_function_predictor_prompt = """
 # Task: Deduce the Function that Produced the Outputs from the Inputs
-Given a set of input/output pairs and a message that describes the function, think through the problem step by step to deduce a general code snippet. This code should produce the hidden outputs from the hidden inputs, matching the original data-generating code that created the input/output pairs. Place your final answer inside python tags! It may be helpful to work through each input/output pair individually to test your function. If your function doesn’t work as expected, revise it until it does. The final code snippet will be used to evaluate your response, which is wrapped in ```python``` tags.
+Given a set of input/output pairs and a message that describes the function, think through the problem step by step to deduce a general code snippet. This code should produce the hidden outputs from the hidden inputs, matching the original data-generating code that created the input/output pairs. Place your final answer inside python tags! It may be helpful to work through each input/output pair individually to test your function. If your function doesn't work as expected, revise it until it does. The final code snippet will be used to evaluate your response, which is wrapped in ```python``` tags.
 
 # Code Requirements:
 - Name the entry function `f` (e.g., `def f(...): ...`), you can have nested definitions inside `f`
@@ -412,3 +412,9 @@ def get_code_problem_predictor_prompt(problem_type: str, snippet: str, input_arg
         return code_error_predictor_prompt.format(snippet=snippet, input_args=input_args)
     else:
         raise ValueError(f"Invalid problem type: {problem_type}")
+
+bio_bvbrc_prompt_template = """
+You are a biological reasoning assistant. Given the following user query, think step by step and then output a list of shell commands (e.g., curl commands) needed to solve the problem. Wrap your reasoning in <think> tags and your commands in <action> tags. Use a Python list of strings for the commands inside <action>.
+
+User Query: {user_query}
+"""

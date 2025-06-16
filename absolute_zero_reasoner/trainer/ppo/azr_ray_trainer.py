@@ -10,6 +10,7 @@ import gc
 import os
 import pickle
 import ast
+import re
 
 import ray
 import torch
@@ -35,6 +36,7 @@ from absolute_zero_reasoner.rewards.code_reward import parse_code_input_output, 
 from absolute_zero_reasoner.utils.code_utils.python_executor import PythonExecutor
 from absolute_zero_reasoner.utils.auxiliary import reflection_keywords
 from absolute_zero_reasoner.utils.logging_utils.stdout import PrettyPrinter
+from absolute_zero_reasoner.utils.code_utils.bvbrc_executor import BVBRCShellExecutor
 
 
 seed_program = """def f(a):
@@ -593,6 +595,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 ast_check=self.config.azr.ast_check,
                 max_workers=self.config.azr.get('executor_max_workers', 1)
             )
+        elif self.config.azr.executor == 'bvbrc_shell':
+            self._executor = BVBRCShellExecutor(timeout=self.config.azr.execute_max_timeout)
         else:
             raise ValueError(f'Invalid executor: {self.config.azr.executor}')
         self.dataset_manager = DatasetManager.remote()
@@ -2046,3 +2050,21 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     current_prob = self.config.azr.data_selection_strategy.composite_chance
                     self.config.azr.data_selection_strategy.composite_chance = new_prob
                     PrettyPrinter.status("Scheduler", f"Updated composite probability from {current_prob:.2f} to {new_prob:.2f}", "info")
+
+    def _execute_bio_bvbrc_actions(self, prompt):
+        # Extract <action>...</action> content
+        action_pattern = re.compile(r'<action>\s*(.*?)\s*</action>', re.DOTALL | re.IGNORECASE)
+        action_contents = action_pattern.findall(prompt)
+        if not action_contents:
+            return []
+        # Assume actions is a list of shell command strings (or dicts)
+        actions = eval(action_contents[0]) if action_contents[0].strip().startswith('[') else [action_contents[0].strip()]
+        results = []
+        for cmd in actions:
+            if isinstance(cmd, dict):
+                command = cmd.get('action_input', '')
+            else:
+                command = cmd
+            stdout, stderr = self._executor.run_query(command)
+            results.append({"command": command, "stdout": stdout, "stderr": stderr})
+        return results
