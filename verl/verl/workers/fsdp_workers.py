@@ -34,7 +34,7 @@ from verl.utils.fsdp_utils import get_fsdp_wrap_policy, init_fn, get_init_weight
 from verl.utils.fsdp_utils import offload_fsdp_optimizer, offload_fsdp_model_to_cpu, load_fsdp_optimizer, \
     load_fsdp_model_to_gpu
 from verl.utils.import_utils import import_external_libs
-from verl.utils.model import compute_position_id_with_mask
+from verl.utils.model import compute_position_id_with_mask, create_huggingface_critic
 from verl.utils.flops_counter import FlopsCounter
 from verl.utils.checkpoint.fsdp_checkpoint_manager import FSDPCheckpointManager
 from verl.workers.sharding_manager.fsdp_ulysses import FSDPUlyssesShardingManager
@@ -643,7 +643,7 @@ class CriticWorker(Worker):
 
         from transformers import AutoConfig, AutoModelForTokenClassification
         from torch import nn
-
+        from verl.utils.model import create_huggingface_critic
         trust_remote_code = False
         critic_model_config = AutoConfig.from_pretrained(local_path, trust_remote_code=trust_remote_code)
         critic_model_config.num_labels = 1
@@ -662,11 +662,22 @@ class CriticWorker(Worker):
             warnings.simplefilter("ignore")
             setattr(critic_model_config, 'classifier_dropout', 0.)
             setattr(critic_model_config, 'hidden_dropout', '0')
-            critic_module = AutoModelForTokenClassification.from_pretrained(pretrained_model_name_or_path=local_path,
-                                                                            torch_dtype=torch_dtype,
-                                                                            config=critic_model_config,
-                                                                            attn_implementation='flash_attention_2',
-                                                                            trust_remote_code=trust_remote_code)
+            model_type = getattr(critic_model_config, "model_type", "")
+            if model_type in ["llama", "deepseek-llm"]:
+                # Use CausalLM + value head for Llama/DeepSeek
+                critic_module = create_huggingface_critic(
+                    model_name=local_path,
+                    override_config_kwargs=override_config,
+                    automodel_kwargs={"torch_dtype": torch_dtype}
+                )
+            else:
+                critic_module = AutoModelForTokenClassification.from_pretrained(
+                    pretrained_model_name_or_path=local_path,
+                    torch_dtype=torch_dtype,
+                    config=critic_model_config,
+                    attn_implementation='flash_attention_2',
+                    trust_remote_code=trust_remote_code
+                )
 
             # some parameters may not in torch_dtype
             critic_module.to(torch_dtype)
