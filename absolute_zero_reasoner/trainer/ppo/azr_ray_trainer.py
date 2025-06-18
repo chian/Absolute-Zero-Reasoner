@@ -29,7 +29,7 @@ from verl.trainer.ppo.ray_trainer import (
 from verl.protocol import pad_dataproto_to_divisor, unpad_dataproto, DataProto
 
 from absolute_zero_reasoner.utils.tracking import ReasonRLTracking
-from absolute_zero_reasoner.data_construction.constructor import get_gen_code_io_data, get_pred_code_io_data
+from absolute_zero_reasoner.data_construction.constructor import get_gen_code_io_data, get_pred_code_io_data, get_gen_bio_bvbrc_prompt
 from absolute_zero_reasoner.trainer.ppo.reason_rl_ray_trainer import ReasonRLRayPPOTrainer
 from absolute_zero_reasoner.utils.dataset.rl_dataset import RLHFDataset
 from absolute_zero_reasoner.rewards.code_reward import parse_code_input_output, parse_inputs_message
@@ -582,7 +582,7 @@ class DatasetManager:
 
 
 class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
-    _supported_tasks = {'code_i', 'code_o', 'code_e', 'code_f'}
+    _supported_tasks = {'code_i', 'code_o', 'code_e', 'code_f', 'bio_bvbrc'}
     def __init__(self, past_epoch_window: int = 10, *args, **kwargs):
         super().__init__(*args, **kwargs)
         assert self.config.actor_rollout_ref.rollout.n == 1, "CodeIO only supports n=1 for now"
@@ -596,6 +596,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 max_workers=self.config.azr.get('executor_max_workers', 1)
             )
         elif self.config.azr.executor == 'bvbrc_shell':
+            # For bio_bvbrc tasks, we use the pseudo-chain processor instead
+            # Keep this for backward compatibility with existing code
             self._executor = BVBRCShellExecutor(timeout=self.config.azr.execute_max_timeout)
         else:
             raise ValueError(f'Invalid executor: {self.config.azr.executor}')
@@ -796,6 +798,90 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         assert len(code_pred_train_dataloader) >= 1
         return iter(code_pred_train_dataloader)
 
+    def _create_train_bio_bvbrc_dataloader(self, data_len: int) -> DataLoader:
+        """
+        Create a dataloader for bio_bvbrc training data using question-answer pairs.
+        """
+        from absolute_zero_reasoner.data_construction.constructor import get_gen_bio_bvbrc_prompt
+        
+        # Load bio question-answer data
+        bio_data_path = self.config.azr.get('bio_data_path', 'data/bio_questions.json')
+        bio_data = self._load_bio_question_data(bio_data_path)
+        
+        # Sample questions for this batch
+        sampled_items = random.sample(bio_data, min(data_len, len(bio_data)))
+        
+        # If we need more data than available, cycle through
+        while len(sampled_items) < data_len:
+            additional_items = random.sample(bio_data, min(data_len - len(sampled_items), len(bio_data)))
+            sampled_items.extend(additional_items)
+        
+        # Generate prompts
+        prompts = []
+        for item in sampled_items:
+            prompt_data = get_gen_bio_bvbrc_prompt(item['question'])
+            prompt_data['ground_truth'] = item['answer']  # Add expected answer
+            prompts.append(prompt_data)
+        
+        # Create temporary parquet file
+        temp_file = f'{self.output_path}/temp_bio_bvbrc.parquet'
+        pd.DataFrame(prompts).to_parquet(temp_file)
+        
+        # Create dataset
+        rlhf_dataset = RLHFDataset(
+            parquet_files=temp_file,
+            tokenizer=self.tokenizer,
+            prompt_key='prompt',
+            max_prompt_length=self.max_prompt_length,
+            filter_prompts=True,
+            return_raw_chat=False,
+            truncation='error'
+        )
+        
+        # Clean up temp file
+        os.remove(temp_file)
+        
+        sampler = RandomSampler(data_source=rlhf_dataset)
+        
+        return DataLoader(
+            dataset=rlhf_dataset,
+            batch_size=data_len,
+            drop_last=False,
+            shuffle=False,
+            collate_fn=collate_fn,
+            sampler=sampler
+        )
+
+    def _load_bio_question_data(self, data_path: str) -> List[Dict]:
+        """Load bio question-answer data from JSON file"""
+        try:
+            with open(data_path, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            # Fallback to a few sample questions if file not found
+            PrettyPrinter.status("WARNING", f"Bio data file not found at {data_path}, using fallback data", "warning")
+            return [
+                {
+                    "question": "List all Pseudomonas aeruginosa genome IDs",
+                    "answer": ["511145.12", "287.1", "208964.1"]
+                },
+                {
+                    "question": "Find proteins in Escherichia coli genome 511145.12",
+                    "answer": [
+                        {"patric_id": "fig|511145.12.peg.1", "product": "thrA"},
+                        {"patric_id": "fig|511145.12.peg.2", "product": "thrB"}
+                    ]
+                },
+                {
+                    "question": "Get taxonomy information for genome 224308.1",
+                    "answer": {"genus": "Bacillus", "species": "subtilis", "strain": "168"}
+                },
+                {
+                    "question": "Search for genomes of Staphylococcus aureus strains",
+                    "answer": ["93061.5", "282458.1", "282459.1", "426430.1"]
+                }
+            ]
+
     def _compute_batch(self, batch: DataProto, metrics: dict, timing_raw: dict, problem_type: str, executor: PythonExecutor) -> tuple[DataProto, dict]:
         PrettyPrinter.section_header(f"Computing batch for {problem_type}")
         # pop those keys for generation
@@ -869,9 +955,34 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     'problem_type': problem_type, 
                     'executor': executor,
                 }
+            elif problem_type == 'gen_bio_bvbrc':
+                # Use the bio reasoning reward manager
+                from absolute_zero_reasoner.rewards.bio_bvbrc_reward_manager import BioReasoningRewardManager
+                bio_reward_manager = BioReasoningRewardManager(
+                    tokenizer=self.tokenizer,
+                    num_examine=self.config.azr.reward.num_examine,
+                    split='train',
+                    reward_fn_extraction_type=self.config.azr.reward.reward_fn_extraction_type,
+                    splitter=self.config.azr.reward.splitter,
+                    output_path=self.output_path,
+                    debug=self.config.azr.reward.debug,
+                    max_prompt_length=self.max_prompt_length,
+                    bvbrc_timeout=self.config.azr.execute_max_timeout,
+                    enable_pseudo_chain=True,
+                    max_fix_iterations=3,
+                    boxed_retry=self.config.azr.reward.boxed_retry,
+                )
+                reward_fn_kwargs = {
+                    'data': batch,
+                    'problem_type': problem_type,
+                    'executor': executor,
+                }
             with _timer(f'reward_fn/{problem_type}', timing_raw):
                 PrettyPrinter.status("REWARD", f"Computing rewards for {problem_type}...", "info")
-                reward_tensor, train_metrics, valid_programs, correct_predictions = self.reward_fn(**reward_fn_kwargs)
+                if problem_type == 'gen_bio_bvbrc':
+                    reward_tensor, train_metrics, valid_programs, correct_predictions = bio_reward_manager(**reward_fn_kwargs)
+                else:
+                    reward_tensor, train_metrics, valid_programs, correct_predictions = self.reward_fn(**reward_fn_kwargs)
                 PrettyPrinter.status("REWARD", f"Found {len(valid_programs) if valid_programs else 0} valid programs", "success")
 
                 # get avg_program lines
@@ -884,18 +995,23 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 max_print = min(self.config.azr.random_print_max_programs, len(valid_programs))
                 for program in random.sample(valid_programs, max_print):
                     PrettyPrinter.status(f"PROBLEM TYPE", problem_type, "info")
-                    if 'code_f' not in problem_type:
+                    if 'code_f' not in problem_type and problem_type != 'gen_bio_bvbrc':
                         PrettyPrinter.code_block(program['snippet'], "python")
                         PrettyPrinter.status("INPUT", program['input'], "info")
                         PrettyPrinter.status("OUTPUT", program['output'], "info")
                         PrettyPrinter.status("THOUGHT", program['thought'], "info")
                         PrettyPrinter.status("COMPOSITE FUNCTION", "YES!" if len(program['composite_functions']) > 0 else "NO!", "info")
-                    else:
+                    elif 'code_f' in problem_type:
                         PrettyPrinter.code_block(program['snippet'], "python")
                         PrettyPrinter.status("INPUT", program['inputs'], "info")
                         PrettyPrinter.status("OUTPUT", program['outputs'], "info")
                         PrettyPrinter.status("MESSAGE", program['message'], "info")
                         PrettyPrinter.status("THOUGHT", program['thought'], "info")
+                    elif problem_type == 'gen_bio_bvbrc':
+                        # Bio reasoning programs have different structure
+                        PrettyPrinter.status("USER QUERY", program.get('user_query', 'N/A'), "info")
+                        PrettyPrinter.status("PROCESSED GENERATION", program.get('processed_generation', 'N/A'), "info")
+                        PrettyPrinter.status("EXECUTION SUCCESS", program.get('execution_success', 'N/A'), "info")
                     print("\n" + "-"*80 + "\n")
             if correct_predictions and self.config.azr.random_print_max_programs > 0:
                 PrettyPrinter.section_header(f"New {problem_type} Programs")
@@ -937,6 +1053,10 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 if valid_programs:
                     processed_programs = process_elements(valid_programs)
                     ray.get(self.dataset_manager.add_problem_batch.remote(processed_programs, self.global_steps))
+            elif problem_type == 'gen_bio_bvbrc':
+                # Bio reasoning doesn't use the traditional dataset management
+                # The pseudo-chain processor handles execution inline
+                pass
             else:
                 raise ValueError(f'Invalid problem type: {problem_type}')
 
@@ -952,6 +1072,9 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             if self.config.azr.data_selection_strategy.max_programs is not None and problem_type.endswith('code_f'):
                 truncated_length, before_length = ray.get(self.dataset_manager.truncate_datasets.remote(self.config.azr.data_selection_strategy.max_programs, 'problem'))
                 PrettyPrinter.status("DATA", f"Truncated {truncated_length} programs from problem dataset, max programs is {self.config.azr.data_selection_strategy.max_programs}, dataset size was {before_length} before truncation", "info")
+            # Bio reasoning doesn't use dataset truncation
+            if problem_type == 'gen_bio_bvbrc':
+                pass
 
             train_metrics = {f'{problem_type}/{k}': np.mean(v) for k, v in train_metrics.items()}
             # log the number of valid programs added to the dataset
@@ -964,13 +1087,18 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     dataset_key = 'error'
                 elif problem_type.endswith('code_f'):
                     dataset_key = 'problem'
+                elif problem_type == 'gen_bio_bvbrc':
+                    # Bio reasoning doesn't use traditional dataset management
+                    train_metrics[f'{problem_type}/num_valid_programs'] = len(valid_programs) if valid_programs else 0
                 else:
                     raise ValueError(f'Invalid problem type: {problem_type}')
-                train_metrics[f'{problem_type}/num_valid_programs'] = ray.get(
-                    self.dataset_manager.get_recent_additions.remote(
-                        dataset_key, self.global_steps, self._past_epoch_window
+                
+                if problem_type != 'gen_bio_bvbrc':
+                    train_metrics[f'{problem_type}/num_valid_programs'] = ray.get(
+                        self.dataset_manager.get_recent_additions.remote(
+                            dataset_key, self.global_steps, self._past_epoch_window
+                        )
                     )
-                )
             metrics.update(train_metrics)
             batch.batch['token_level_scores'] = reward_tensor
 
@@ -1625,6 +1753,11 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     problem_type='code_f',
                     data_len=data_len,
                 )
+
+            if 'bio_bvbrc' in self.config.azr.problem_types:
+                gen_bio_bvbrc_dataloader = self._create_train_bio_bvbrc_dataloader(
+                    data_len=data_len,
+                )
             for _ in range(self.config.azr.data_selection_strategy.update_iteration):
                 metrics = {}
                 timing_raw = {}
@@ -1684,6 +1817,12 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                         batch: DataProto = DataProto.from_single_dict(batch_dict)
                         batch, metrics = self._compute_batch(batch, metrics, timing_raw, problem_type='pred_code_f', executor=self._executor)
                         batches[f'pred_code_f'] = batch
+
+                    if 'bio_bvbrc' in self.config.azr.problem_types:
+                        batch_dict = next(gen_bio_bvbrc_dataloader)
+                        batch: DataProto = DataProto.from_single_dict(batch_dict)
+                        batch, metrics = self._compute_batch(batch, metrics, timing_raw, problem_type='gen_bio_bvbrc', executor=self._executor)
+                        batches[f'gen_bio_bvbrc'] = batch
 
                     # concatenate batches
                     batch = DataProto.concat(list(batches.values()))
@@ -1764,6 +1903,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     if not self.pretrain_pred:
                         all_types.append('gen_code_f')
                     all_types.append('pred_code_f')
+                if 'bio_bvbrc' in self.config.azr.problem_types:
+                    all_types.append('gen_bio_bvbrc')
                 sep_batches = batch.chunk(len(all_types))
                 for sep_batch, problem_type in zip(sep_batches, all_types):
                     sep_metrics = compute_data_metrics(batch=sep_batch, use_critic=self.use_critic, tokenizer=self.tokenizer)
@@ -2051,20 +2192,4 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     self.config.azr.data_selection_strategy.composite_chance = new_prob
                     PrettyPrinter.status("Scheduler", f"Updated composite probability from {current_prob:.2f} to {new_prob:.2f}", "info")
 
-    def _execute_bio_bvbrc_actions(self, prompt):
-        # Extract <action>...</action> content
-        action_pattern = re.compile(r'<action>\s*(.*?)\s*</action>', re.DOTALL | re.IGNORECASE)
-        action_contents = action_pattern.findall(prompt)
-        if not action_contents:
-            return []
-        # Assume actions is a list of shell command strings (or dicts)
-        actions = eval(action_contents[0]) if action_contents[0].strip().startswith('[') else [action_contents[0].strip()]
-        results = []
-        for cmd in actions:
-            if isinstance(cmd, dict):
-                command = cmd.get('action_input', '')
-            else:
-                command = cmd
-            stdout, stderr = self._executor.run_query(command)
-            results.append({"command": command, "stdout": stdout, "stderr": stderr})
-        return results
+

@@ -1,0 +1,177 @@
+# Bio BV-BRC Reasoning Training Configuration
+# Based on azr_ppo_trainer.yaml with bio-specific modifications
+
+data:
+  tokenizer: null
+  train_files: data/bio/train.parquet  # Not used for bio_bvbrc
+  val_files: data/bio/test.parquet     # Not used for bio_bvbrc
+  prompt_key: prompt
+  max_prompt_length: 8096
+  max_response_length: 8096
+  max_validation_prompt_length: 8096
+  train_batch_size: 64  # Smaller batch for bio reasoning
+  val_batch_size: 64
+  return_raw_input_ids: False
+  return_raw_chat: False
+  shuffle: True
+
+actor_rollout_ref:
+  hybrid_engine: True
+  model:
+    path: ~/models/deepseek-llm-7b-chat
+    pretrained_tokenizer: True
+    external_lib: null
+    override_config: { }
+    enable_gradient_checkpointing: True
+    use_remove_padding: False
+  actor:
+    strategy: fsdp
+    ppo_mini_batch_size: 16  # Smaller for bio reasoning
+    ppo_micro_batch_size_per_gpu: null
+    use_dynamic_bsz: False
+    ppo_max_token_len_per_gpu: 16384
+    grad_clip: 1.0
+    clip_ratio: 0.2
+    entropy_coeff: 0.001
+    use_kl_loss: False
+    ppo_epochs: 1
+    shuffle: False
+    ulysses_sequence_parallel_size: 1
+    optim:
+      lr: 1e-6
+      lr_warmup_steps_ratio: 0.
+      min_lr_ratio: null
+      warmup_style: constant
+      total_training_steps: -1
+    fsdp_config:
+      wrap_policy:
+        min_num_params: 0
+      param_offload: False
+      grad_offload: False
+      optimizer_offload: False
+      fsdp_size: -1
+  ref:
+    include_ref: True
+    fsdp_config:
+      param_offload: False
+      wrap_policy:
+        min_num_params: 0
+    log_prob_micro_batch_size_per_gpu: null
+    log_prob_use_dynamic_bsz: ${actor_rollout_ref.actor.use_dynamic_bsz}
+    log_prob_max_token_len_per_gpu: ${actor_rollout_ref.actor.ppo_max_token_len_per_gpu}
+    ulysses_sequence_parallel_size: ${actor_rollout_ref.actor.ulysses_sequence_parallel_size}
+  rollout:
+    name: vllm
+    temperature: 1.0
+    top_k: -1
+    top_p: 1
+    prompt_length: ${data.max_prompt_length}
+    response_length: ${data.max_response_length}
+    dtype: bfloat16
+    gpu_memory_utilization: 0.5
+    ignore_eos: False
+    enforce_eager: True
+    free_cache_engine: True
+    load_format: dummy_dtensor
+    tensor_model_parallel_size: 2
+    max_num_batched_tokens: 8192
+    max_num_seqs: 1024
+    log_prob_micro_batch_size_per_gpu: null
+    log_prob_use_dynamic_bsz: ${actor_rollout_ref.actor.use_dynamic_bsz}
+    log_prob_max_token_len_per_gpu: ${actor_rollout_ref.actor.ppo_max_token_len_per_gpu}
+    disable_log_stats: True
+    enable_chunked_prefill: True
+    do_sample: True
+    n: 1
+
+critic:
+  strategy: fsdp
+  optim:
+    lr: 1e-5
+    lr_warmup_steps_ratio: 0.
+    min_lr_ratio: null
+    warmup_style: constant
+    total_training_steps: -1
+  model:
+    path: ~/models/deepseek-llm-7b-chat
+    tokenizer_path: ${actor_rollout_ref.model.path}
+    override_config: { }
+    external_lib: ${actor_rollout_ref.model.external_lib}
+    enable_gradient_checkpointing: True
+    use_remove_padding: False
+    fsdp_config:
+      param_offload: False
+      grad_offload: False
+      optimizer_offload: False
+      wrap_policy:
+        min_num_params: 0
+      fsdp_size: -1
+  ppo_mini_batch_size: ${actor_rollout_ref.actor.ppo_mini_batch_size}
+  ppo_micro_batch_size_per_gpu: null
+  forward_micro_batch_size_per_gpu: ${critic.ppo_micro_batch_size_per_gpu}
+  use_dynamic_bsz: ${actor_rollout_ref.actor.use_dynamic_bsz}
+  ppo_max_token_len_per_gpu: 32768
+  forward_max_token_len_per_gpu: ${critic.ppo_max_token_len_per_gpu}
+  ulysses_sequence_parallel_size: 1
+  ppo_epochs: ${actor_rollout_ref.actor.ppo_epochs}
+  shuffle: ${actor_rollout_ref.actor.shuffle}
+  grad_clip: 1.0
+  cliprange_value: 0.5
+
+reward_model:
+  enable: False
+
+algorithm:
+  gamma: 1.0
+  lam: 1.0
+  adv_estimator: reinforce_plus_plus
+  kl_penalty: kl
+  kl_ctrl:
+    type: fixed
+    kl_coef: 0.001
+
+trainer:
+  debug: False
+  total_epochs: 10  # Fewer epochs for bio reasoning
+  total_training_steps: null
+  project_name: bio_reasoning
+  experiment_name: bvbrc_pseudo_chain
+  logger: [ 'console', 'wandb' ]
+  val_generations_to_log_to_wandb: 5
+  nnodes: 1
+  n_gpus_per_node: 8
+  save_freq: 5
+  resume_mode: auto
+  resume_from_path: False
+  test_freq: 2  # Test more frequently
+  critic_warmup: 0
+  default_hdfs_dir: null
+  default_local_dir: checkpoints/bio_reasoning/${trainer.project_name}/${trainer.experiment_name}
+  remove_previous_ckpt_in_save: False
+  del_local_ckpt_after_load: False
+  wandb_tags: ['bio_reasoning', 'pseudo_chain', 'bvbrc']
+
+reward_fn:
+  extraction_type: none  # Bio reasoning doesn't need math extraction
+  math_metric: deepscaler
+  splitter: "Assistant:"
+  boxed_retry: False
+
+azr:
+  seed: 1
+  executor_max_workers: 1
+  executor_cleanup_frequency: 1
+  problem_types:
+    - bio_bvbrc  # Only bio reasoning
+  bio_data_path: data/bio_questions.json  # Path to our questions file
+  executor: bvbrc_shell  # Use BV-BRC shell executor
+  execute_max_timeout: 30  # Longer timeout for API calls
+  random_print_max_programs: 3
+  train_propose: False  # Not used for bio reasoning
+  data_selection_strategy:
+    update_iteration: 1
+    data_len: 64  # Batch size for bio questions
+  reward:
+    extract_code_block: False  # Bio reasoning doesn't use code blocks
+    generation_reward_config:
+      format_reward: True 

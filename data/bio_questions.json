@@ -1,0 +1,76 @@
+[
+  {
+    "question": "List all Pseudomonas aeruginosa genome IDs",
+    "answer": ["511145.12", "287.1", "208964.1", "235443.1", "208963.1"]
+  },
+  {
+    "question": "Find proteins in Escherichia coli genome 511145.12",
+    "answer": [
+      {"patric_id": "fig|511145.12.peg.1", "product": "thrA"},
+      {"patric_id": "fig|511145.12.peg.2", "product": "thrB"},
+      {"patric_id": "fig|511145.12.peg.3", "product": "thrC"}
+    ]
+  },
+  {
+    "question": "Get taxonomy information for genome 224308.1",
+    "answer": {"genus": "Bacillus", "species": "subtilis", "strain": "168"}
+  },
+  {
+    "question": "Search for genomes of Staphylococcus aureus strains",
+    "answer": ["93061.5", "282458.1", "282459.1", "426430.1", "196620.1"]
+  },
+  {
+    "question": "Find features in genome 83333.1 that are proteins",
+    "answer": [
+      {"patric_id": "fig|83333.1.peg.1", "feature_type": "CDS", "product": "thr operon leader peptide"},
+      {"patric_id": "fig|83333.1.peg.2", "feature_type": "CDS", "product": "bifunctional aspartokinase I"}
+    ]
+  },
+  {
+    "question": "List protein features for genome 511145.12",
+    "answer": [
+      {"patric_id": "fig|511145.12.peg.1", "start": 337, "end": 2799, "strand": "+"},
+      {"patric_id": "fig|511145.12.peg.2", "start": 2801, "end": 3733, "strand": "+"}
+    ]
+  },
+  {
+    "question": "Get genome information for Mycobacterium tuberculosis H37Rv",
+    "answer": {
+      "genome_id": "83332.1",
+      "genome_name": "Mycobacterium tuberculosis H37Rv",
+      "organism_name": "Mycobacterium tuberculosis",
+      "genome_length": 4411532,
+      "gc_content": 65.6
+    }
+  },
+  {
+    "question": "Find genomes in the Enterobacteriaceae family",
+    "answer": ["511145.12", "99287.1", "386585.6", "272561.1", "585054.4"]
+  },
+  {
+    "question": "Search for antibiotic resistance genes in Staphylococcus aureus",
+    "answer": [
+      {"patric_id": "fig|93061.5.peg.123", "product": "beta-lactamase", "gene": "blaZ"},
+      {"patric_id": "fig|93061.5.peg.456", "product": "methicillin resistance protein", "gene": "mecA"}
+    ]
+  },
+  {
+    "question": "List subsystems in genome 224308.1",
+    "answer": [
+      {"subsystem_name": "Glycolysis and Gluconeogenesis", "role_count": 12},
+      {"subsystem_name": "TCA Cycle", "role_count": 8},
+      {"subsystem_name": "Fatty Acid Biosynthesis", "role_count": 15}
+    ]
+  },
+  {
+    "question": "Find all Escherichia coli genomes",
+    "answer": ["511145.12", "83333.1", "199310.1", "316407.1", "364106.9"]
+  },
+  {
+    "question": "Get protein families for genome 511145.12",
+    "answer": [
+      {"family_id": "PLF_1240_00000001", "family_type": "PATRIC_genus", "protein_count": 45},
+      {"family_id": "PLF_1240_00000002", "family_type": "PATRIC_genus", "protein_count": 23}
+    ]
+  }
+] 
