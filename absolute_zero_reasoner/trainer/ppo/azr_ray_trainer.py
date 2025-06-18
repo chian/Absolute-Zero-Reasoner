@@ -1724,8 +1724,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 except:
                     # Handle missing datasets gracefully
                     PrettyPrinter.status("DATA", f"Length of {dataset_name}: 0 (not available)", "info")
-                    else:
-                PrettyPrinter.section_header(f"Creating initial seed datasets")
+        else:
+            PrettyPrinter.section_header(f"Creating initial seed datasets")
                 
                 # Seed bio reasoning dataset with manual solutions if bio tasks are present
                 if 'bio_bvbrc' in self.config.azr.problem_types:
