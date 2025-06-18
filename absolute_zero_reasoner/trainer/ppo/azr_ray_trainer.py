@@ -917,7 +917,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             "info"
         )
         
-        return DataLoader(
+        bio_dataloader = DataLoader(
             dataset=rlhf_dataset,
             batch_size=data_len,
             drop_last=False,
@@ -925,6 +925,9 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             collate_fn=collate_fn,
             sampler=sampler
         )
+        
+        assert len(bio_dataloader) >= 1
+        return iter(bio_dataloader)
 
     def _load_manual_bio_solutions(self, solutions_path: str) -> List[Dict]:
         """
