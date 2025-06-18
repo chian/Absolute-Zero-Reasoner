@@ -1082,15 +1082,15 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     tokenizer=self.tokenizer,
                     num_examine=self.config.azr.reward.num_examine,
                     split='train',
-                    reward_fn_extraction_type=self.config.azr.reward.reward_fn_extraction_type,
-                    splitter=self.config.azr.reward.splitter,
+                    reward_fn_extraction_type=self.config.reward_fn.extraction_type,
+                    splitter=self.config.reward_fn.splitter,
                     output_path=self.config.trainer.default_local_dir,
-                    debug=self.config.azr.reward.debug,
+                    debug=self.config.trainer.debug,
                     max_prompt_length=self.config.data.max_prompt_length,
                     bvbrc_timeout=self.config.azr.execute_max_timeout,
                     enable_pseudo_chain=True,
                     max_fix_iterations=3,
-                    boxed_retry=self.config.azr.reward.boxed_retry,
+                    boxed_retry=self.config.reward_fn.boxed_retry,
                 )
 
             # make sure actor_rollout_wg n > 1

@@ -252,6 +252,7 @@ azr:
       # - except
   reward:
     n_samples: 8
+    num_examine: 0  # Number of batches to print for debugging (0=none, 1=some)
     extract_code_block: False  # Bio reasoning doesn't use code blocks
     code_f_reward_type: binary # [accuracy, binary]
     generation_reward_config:
