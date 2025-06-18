@@ -149,7 +149,7 @@ trainer:
   default_local_dir: checkpoints/bio_reasoning/${trainer.project_name}/${trainer.experiment_name}
   remove_previous_ckpt_in_save: False
   del_local_ckpt_after_load: False
-  wandb_tags: ['bio_reasoning', 'pseudo_chain', 'bvbrc']
+  wandb_tags: null
 
 reward_fn:
   extraction_type: none  # Bio reasoning doesn't need math extraction
