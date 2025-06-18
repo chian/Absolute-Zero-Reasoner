@@ -1,0 +1,5 @@
+#conversion script
+python -m absolute_zero_reasoner.data_construction.bio_bvbrc_preprocess
+
+#run ppo on bio
+po --config-path configs --config-name bio_bvbrc_ppo_trainer
