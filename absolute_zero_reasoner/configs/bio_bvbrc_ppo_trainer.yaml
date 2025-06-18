@@ -186,7 +186,7 @@ azr:
   executor_cleanup_frequency: 1
   problem_types:
     - bio_bvbrc  # Only bio reasoning
-  bio_data_path: data/bio_questions.json  # Path to our questions file
+  manual_bio_solutions_path: data/bio_manual_solutions.json  # Path to manually curated solutions for bootstrapping
   pred_data_mix_strategy: "max_new"  # [uniform_total, max_new, half_new, step]
   gen_data_probabilities_strategy: "uniform"  # [uniform, step]
   past_epoch_window: 1

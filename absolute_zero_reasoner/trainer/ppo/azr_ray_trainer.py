@@ -11,6 +11,9 @@ import os
 import pickle
 import ast
 import re
+import time
+import pandas as pd
+import tempfile
 
 import ray
 import torch
@@ -829,104 +832,88 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
 
     def _create_train_bio_bvbrc_dataloader(self, data_len: int) -> DataLoader:
         """
-        Create a dataloader for bio_bvbrc training data using question-answer pairs.
-        Now includes sampling from accumulated successful traces for bootstrapping.
+        Create a dataloader for bio_bvbrc training data using parquet files + accumulated traces.
+        This now follows the standard architecture pattern consistently.
         """
+        from absolute_zero_reasoner.utils.dataset.rl_dataset import RLHFDataset
         from absolute_zero_reasoner.data_construction.constructor import get_gen_bio_bvbrc_prompt
+        from torch.utils.data import DataLoader, RandomSampler
+        import tempfile
+        import os
         
-        # Load bio question-answer data (original dataset)
-        bio_data_path = self.config.azr.get('bio_data_path', 'data/bio_questions.json')
-        original_bio_data = self._load_bio_question_data(bio_data_path)
-        
-        # Get accumulated successful bio reasoning traces
+        # Get accumulated successful bio reasoning traces for bootstrapping
         accumulated_traces = ray.get(self.dataset_manager.get_dataset.remote('bio_reasoning'))
         
-        # Combine original questions with accumulated successful traces
-        all_bio_data = []
+        # Load original training data from parquet file (standard approach)
+        original_parquet_df = pd.read_parquet(self.config.data.train_files)
         
-        # Add original questions
-        for item in original_bio_data:
-            all_bio_data.append({
-                'type': 'original',
-                'question': item['question'],
-                'answer': item['answer'],
-                'source': 'original_dataset'
+        # Combine original parquet data with accumulated successful traces
+        all_training_data = []
+        
+        # Add original training questions from parquet
+        for _, row in original_parquet_df.iterrows():
+            all_training_data.append({
+                'data_source': 'bio_bvbrc_original',
+                'prompt': row['prompt'],
+                'ability': row['ability'],
+                'reward_model': row['reward_model'],
+                'extra_info': row['extra_info']
             })
         
-        # Add successful traces (reformat for consistency)
+        # Add successful accumulated traces (reformatted as training examples)
         for trace in accumulated_traces:
             if trace.get('reasoning_trace') and trace.get('success_metrics', {}).get('execution_success_rate', 0) > 0.5:
-                all_bio_data.append({
-                    'type': 'trace',
-                    'question': trace['question'],
-                    'answer': trace['answer'],
-                    'reasoning_trace': trace['reasoning_trace'],
-                    'source': 'accumulated_traces'
+                # Create a prompt from the successful trace
+                prompt_data = get_gen_bio_bvbrc_prompt(trace['question'])
+                
+                all_training_data.append({
+                    'data_source': 'bio_bvbrc_accumulated',
+                    'prompt': prompt_data['prompt'], 
+                    'ability': 'bio_bvbrc',
+                    'reward_model': {
+                        'style': 'rule',
+                        'ground_truth': json.dumps(trace['answer'])
+                    },
+                    'extra_info': {
+                        'question': trace['question'],
+                        'answer': json.dumps(trace['answer']) if not isinstance(trace['answer'], str) else trace['answer'],
+                        'source': 'accumulated_traces',
+                        'example_trace': trace['reasoning_trace']  # Include successful trace as example
+                    }
                 })
         
-        # Sample from combined dataset (prefer successful traces if available)
-        if len(accumulated_traces) > 0:
-            # Use a mix: 30% original questions, 70% successful traces
-            original_count = min(len(original_bio_data), max(1, int(data_len * 0.3)))
-            trace_count = data_len - original_count
-            
-            sampled_original = random.sample(
-                [item for item in all_bio_data if item['type'] == 'original'], 
-                min(original_count, len([item for item in all_bio_data if item['type'] == 'original']))
-            )
-            sampled_traces = random.sample(
-                [item for item in all_bio_data if item['type'] == 'trace'], 
-                min(trace_count, len([item for item in all_bio_data if item['type'] == 'trace']))
-            )
-            sampled_items = sampled_original + sampled_traces
+        # Sample from combined data
+        if len(all_training_data) > data_len:
+            sampled_data = random.sample(all_training_data, data_len)
         else:
-            # No accumulated traces yet, use original questions
-            sampled_items = random.sample(original_bio_data, min(data_len, len(original_bio_data)))
-            sampled_items = [{'type': 'original', 'question': item['question'], 'answer': item['answer'], 'source': 'original_dataset'} for item in sampled_items]
+            sampled_data = all_training_data
         
-        # If we need more data than available, cycle through
-        while len(sampled_items) < data_len:
-            additional_items = random.sample(all_bio_data, min(data_len - len(sampled_items), len(all_bio_data)))
-            sampled_items.extend(additional_items)
-        
-        # Generate prompts
-        prompts = []
-        for item in sampled_items:
-            if item['type'] == 'trace' and 'reasoning_trace' in item:
-                # For successful traces, we can use them as few-shot examples or modify the prompt
-                prompt_data = get_gen_bio_bvbrc_prompt(item['question'])
-                prompt_data['example_trace'] = item['reasoning_trace']  # Add successful example
-            else:
-                # For original questions, use standard prompt
-                prompt_data = get_gen_bio_bvbrc_prompt(item['question'])
+        # Create temporary parquet file with combined data
+        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp_file:
+            temp_parquet_path = tmp_file.name
             
-            prompt_data['ground_truth'] = item['answer']  # Add expected answer
-            prompt_data['data_source'] = item['source']
-            prompts.append(prompt_data)
+        combined_df = pd.DataFrame(sampled_data)
+        combined_df.to_parquet(temp_parquet_path)
         
-        # Create temporary parquet file
-        temp_file = f'{self._code_dir}/temp_bio_bvbrc.parquet'
-        pd.DataFrame(prompts).to_parquet(temp_file)
-        
-        # Create dataset
+        # Create dataset using standard RLHFDataset (consistent with validation)
         rlhf_dataset = RLHFDataset(
-            parquet_files=temp_file,
+            parquet_files=temp_parquet_path,
             tokenizer=self.tokenizer,
             prompt_key='prompt',
             max_prompt_length=self.max_prompt_length,
             filter_prompts=True,
-            return_raw_chat=False,
+            return_raw_chat=self.config.data.get('return_raw_chat', False),
             truncation='error'
         )
         
         # Clean up temp file
-        os.remove(temp_file)
+        os.unlink(temp_parquet_path)
         
         sampler = RandomSampler(data_source=rlhf_dataset)
         
         PrettyPrinter.status(
             "DATA", 
-            f"Bio dataloader: {len(accumulated_traces)} accumulated traces, {len(original_bio_data)} original questions", 
+            f"Bio training dataloader: {len(accumulated_traces)} accumulated traces + {len(original_parquet_df)} original questions", 
             "info"
         )
         
@@ -939,35 +926,59 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             sampler=sampler
         )
 
-    def _load_bio_question_data(self, data_path: str) -> List[Dict]:
-        """Load bio question-answer data from JSON file"""
-        try:
-            with open(data_path, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            # Fallback to a few sample questions if file not found
-            PrettyPrinter.status("WARNING", f"Bio data file not found at {data_path}, using fallback data", "warning")
-            return [
-                {
-                    "question": "List all Pseudomonas aeruginosa genome IDs",
-                    "answer": ["511145.12", "287.1", "208964.1"]
-                },
-                {
-                    "question": "Find proteins in Escherichia coli genome 511145.12",
-                    "answer": [
-                        {"patric_id": "fig|511145.12.peg.1", "product": "thrA"},
-                        {"patric_id": "fig|511145.12.peg.2", "product": "thrB"}
-                    ]
-                },
-                {
-                    "question": "Get taxonomy information for genome 224308.1",
-                    "answer": {"genus": "Bacillus", "species": "subtilis", "strain": "168"}
-                },
-                {
-                    "question": "Search for genomes of Staphylococcus aureus strains",
-                    "answer": ["93061.5", "282458.1", "282459.1", "426430.1"]
+    def _load_manual_bio_solutions(self, solutions_path: str) -> List[Dict]:
+        """
+        Load manually curated bio reasoning solutions to seed the bio_reasoning dataset.
+        
+        Expected format:
+        [
+          {
+            "question": "List all Pseudomonas aeruginosa genome IDs",
+            "reasoning_trace": "<think>I need to search...</think><action>search_genomes('Pseudomonas aeruginosa')</action>",
+            "execution_results": [...],
+            "answer": ["511145.12", "287.1", "208964.1"],
+            "success_metrics": {"execution_success_rate": 1.0, "reasoning_quality": 0.9}
+          }
+        ]
+        """
+        if not os.path.exists(solutions_path):
+            PrettyPrinter.status("INFO", f"No manual bio solutions found at {solutions_path}", "info")
+            return []
+        
+        with open(solutions_path, 'r') as f:
+            manual_solutions = json.load(f)
+        
+        PrettyPrinter.status("DATA", f"Loaded {len(manual_solutions)} manual bio reasoning solutions", "success")
+        return manual_solutions
+
+    def _seed_bio_reasoning_dataset(self):
+        """Seed the bio_reasoning dataset with manually curated solutions at startup"""
+        manual_solutions_path = self.config.azr.get('manual_bio_solutions_path', 'data/bio_manual_solutions.json')
+        manual_solutions = self._load_manual_bio_solutions(manual_solutions_path)
+        
+        if manual_solutions:
+            # Process manual solutions to match the expected format
+            processed_solutions = []
+            for solution in manual_solutions:
+                processed_solution = {
+                    'question': solution['question'],
+                    'reasoning_trace': solution['reasoning_trace'],
+                    'execution_results': solution.get('execution_results', []),
+                    'success_metrics': solution.get('success_metrics', {'execution_success_rate': 1.0}),
+                    'answer': solution['answer'],
+                    'ground_truth': solution['answer'],
+                    'source': 'manual_curation',
+                    'timestamp': time.time()
                 }
-            ]
+                processed_solutions.append(processed_solution)
+            
+            # Add to bio_reasoning dataset
+            ray.get(self.dataset_manager.add_bio_reasoning_batch.remote(processed_solutions, 0))  # Step 0 for manual seeds
+            PrettyPrinter.status(
+                "DATA", 
+                f"Seeded bio_reasoning dataset with {len(processed_solutions)} manual solutions", 
+                "success"
+            )
 
     def _process_bio_reasoning_traces(self, valid_programs: List[Dict]) -> List[Dict]:
         """
@@ -1106,17 +1117,23 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     reward_tensor, train_metrics, valid_programs, correct_predictions = bio_reward_manager(**reward_fn_kwargs)
                 else:
                     reward_tensor, train_metrics, valid_programs, correct_predictions = self.reward_fn(**reward_fn_kwargs)
-                PrettyPrinter.status("REWARD", f"Found {len(valid_programs) if valid_programs else 0} valid programs", "success")
+                # For bio tasks, successful traces are in correct_predictions, not valid_programs
+                if problem_type == 'gen_bio_bvbrc':
+                    PrettyPrinter.status("REWARD", f"Found {len(correct_predictions) if correct_predictions else 0} successful bio reasoning traces", "success")
+                    # Bio reasoning doesn't have 'snippet' field, so skip avg_program_lines
+                    train_metrics[f'{problem_type}/avg_program_lines'] = 0
+                else:
+                    PrettyPrinter.status("REWARD", f"Found {len(valid_programs) if valid_programs else 0} valid programs", "success")
+                    # get avg_program lines
+                    avg_program_lines = sum(len(program['snippet'].split('\n')) for program in valid_programs) / len(valid_programs) if valid_programs else 0
+                    train_metrics[f'{problem_type}/avg_program_lines'] = avg_program_lines
 
-                # get avg_program lines
-                avg_program_lines = sum(len(program['snippet'].split('\n')) for program in valid_programs) / len(valid_programs) if valid_programs else 0
-                train_metrics[f'{problem_type}/avg_program_lines'] = avg_program_lines
-
-            # Log new programs if available
-            if valid_programs and self.config.azr.random_print_max_programs > 0:
+            # Log new programs if available - use correct_predictions for bio tasks, valid_programs for code tasks
+            programs_to_show = correct_predictions if problem_type == 'gen_bio_bvbrc' else valid_programs
+            if programs_to_show and self.config.azr.random_print_max_programs > 0:
                 PrettyPrinter.section_header(f"New {problem_type} Programs")
-                max_print = min(self.config.azr.random_print_max_programs, len(valid_programs))
-                for program in random.sample(valid_programs, max_print):
+                max_print = min(self.config.azr.random_print_max_programs, len(programs_to_show))
+                for program in random.sample(programs_to_show, max_print):
                     PrettyPrinter.status(f"PROBLEM TYPE", problem_type, "info")
                     if 'code_f' not in problem_type and problem_type != 'gen_bio_bvbrc':
                         PrettyPrinter.code_block(program['snippet'], "python")
@@ -1131,13 +1148,14 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                         PrettyPrinter.status("MESSAGE", program['message'], "info")
                         PrettyPrinter.status("THOUGHT", program['thought'], "info")
                     elif problem_type == 'gen_bio_bvbrc':
-                        # Bio reasoning programs have different structure
+                        # Bio reasoning programs have different structure (data_dict format)
                         PrettyPrinter.status("USER QUERY", program.get('user_query', 'N/A'), "info")
                         PrettyPrinter.status("PROCESSED GENERATION", program.get('processed_generation', 'N/A'), "info")
-                        PrettyPrinter.status("EXECUTION SUCCESS", program.get('execution_success', 'N/A'), "info")
+                        PrettyPrinter.status("EXTRACTION", program.get('extracted_content', 'N/A'), "info")
                     print("\n" + "-"*80 + "\n")
-            if correct_predictions and self.config.azr.random_print_max_programs > 0:
-                PrettyPrinter.section_header(f"New {problem_type} Programs")
+            # Show correct_predictions for code tasks only (bio tasks already handled above)
+            if correct_predictions and self.config.azr.random_print_max_programs > 0 and problem_type != 'gen_bio_bvbrc':
+                PrettyPrinter.section_header(f"Correct Predictions for {problem_type}")
                 max_print = min(self.config.azr.random_print_max_programs, len(correct_predictions))
                 for program in random.sample(correct_predictions, max_print):
                     if 'code_f' not in problem_type:
@@ -1178,8 +1196,9 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     ray.get(self.dataset_manager.add_problem_batch.remote(processed_programs, self.global_steps))
             elif problem_type == 'gen_bio_bvbrc':
                 # Add successful bio reasoning traces back to the dataset for future training
-                if valid_programs:
-                    processed_bio_traces = self._process_bio_reasoning_traces(valid_programs)
+                # Bio reasoning uses correct_predictions, not valid_programs
+                if correct_predictions:
+                    processed_bio_traces = self._process_bio_reasoning_traces(correct_predictions)
                     ray.get(self.dataset_manager.add_bio_reasoning_batch.remote(processed_bio_traces, self.global_steps))
                     PrettyPrinter.status(
                         "DATA", 
@@ -1705,13 +1724,18 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 except:
                     # Handle missing datasets gracefully
                     PrettyPrinter.status("DATA", f"Length of {dataset_name}: 0 (not available)", "info")
-        else:
-            PrettyPrinter.section_header(f"Creating initial seed datasets")
-            # create init dataset - only for code tasks, not bio tasks
-            code_problem_types = [pt for pt in self.config.azr.problem_types if pt.startswith('code_')]
-            need_seed_dataset = any(problem_type != 'code_e' for problem_type in code_problem_types) or 'code_f' in code_problem_types
-            need_error_dataset = 'code_e' in code_problem_types
-            need_code_f_dataset = 'code_f' in code_problem_types
+                    else:
+                PrettyPrinter.section_header(f"Creating initial seed datasets")
+                
+                # Seed bio reasoning dataset with manual solutions if bio tasks are present
+                if 'bio_bvbrc' in self.config.azr.problem_types:
+                    self._seed_bio_reasoning_dataset()
+                
+                # create init dataset - only for code tasks, not bio tasks
+                code_problem_types = [pt for pt in self.config.azr.problem_types if pt.startswith('code_')]
+                need_seed_dataset = any(problem_type != 'code_e' for problem_type in code_problem_types) or 'code_f' in code_problem_types
+                need_error_dataset = 'code_e' in code_problem_types
+                need_code_f_dataset = 'code_f' in code_problem_types
 
             # Initialize with defaults
             seed_dataset = []
@@ -2251,6 +2275,41 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         # save datasets
         pickle.dump(datasets_with_types, open(save_dir / 'datasets.pkl', 'wb'))
         PrettyPrinter.status("SAVE", f"Saved datasets and type counters to {save_dir}", "success")
+        
+        # Save bio reasoning traces to JSON format if available
+        if 'bio_bvbrc' in self.config.azr.problem_types:
+            self._save_bio_reasoning_traces_json(save_dir)
+
+    def _save_bio_reasoning_traces_json(self, save_dir: Path):
+        """Save bio reasoning traces in JSON format similar to manual solutions format"""
+        bio_traces = ray.get(self.dataset_manager.get_dataset.remote('bio_reasoning'))
+        
+        if not bio_traces:
+            PrettyPrinter.status("SAVE", "No bio reasoning traces to save", "info")
+            return
+            
+        # Convert to manual solutions format
+        json_traces = []
+        for trace in bio_traces:
+            json_trace = {
+                "question": trace.get('question', ''),
+                "reasoning_trace": trace.get('reasoning_trace', ''),
+                "execution_results": trace.get('execution_results', []),
+                "answer": trace.get('answer', ''),
+                "success_metrics": trace.get('success_metrics', {})
+            }
+            json_traces.append(json_trace)
+        
+        # Save to JSON file
+        json_file_path = save_dir / 'bio_reasoning_traces.json'
+        with open(json_file_path, 'w') as f:
+            json.dump(json_traces, f, indent=2, ensure_ascii=False)
+        
+        PrettyPrinter.status(
+            "SAVE", 
+            f"Saved {len(json_traces)} bio reasoning traces to {json_file_path}", 
+            "success"
+        )
 
     def _load_datasets(self, save_dir: Path):
         """Load input/output datasets from JSONL files"""

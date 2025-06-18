@@ -19,6 +19,7 @@
     <a href="#evaluation-code" style="text-decoration: none; font-weight: bold;">📃 Evaluation</a>
   </p>
   <p>
+    <a href="#bio-reasoning" style="text-decoration: none; font-weight: bold;">🧬 Bio Reasoning</a> •
     <a href="#citation" style="text-decoration: none; font-weight: bold;">🎈 Citation</a> •
     <a href="#acknowledgement" style="text-decoration: none; font-weight: bold;">🌻 Acknowledgement</a> •
     <a href="#contact" style="text-decoration: none; font-weight: bold;">📧 Contact</a> •
@@ -441,6 +442,127 @@ bash evaluation/code_eval/scripts/run_evalplus.sh 0 <humaneval|mbpp> <andrewzh/A
 
 ## Math
 Please refer to [evaluation/math_eval/README.md](evaluation/math_eval/README.md) for math evaluation.
+
+
+<!-- ============================================== -->
+<div align="left">
+  <h1 id="bio-reasoning">🧬 Bio Reasoning Data Architecture</h1>
+  <hr style="height: 3px; background: linear-gradient(90deg, #EF8E8D, #5755A3); border: none; border-radius: 3px;">
+</div>
+
+## Overview
+
+Bio reasoning tasks use BV-BRC API calls for bioinformatics analysis. The data architecture follows a consistent **parquet-based approach** with bootstrapping from successful reasoning traces.
+
+## Data Sources (in order of usage)
+
+### 1. **Manual Solutions** (Optional - Bootstrapping)
+- **File**: `data/bio_manual_solutions.json`
+- **Purpose**: Seeds the `bio_reasoning` dataset with high-quality examples at startup
+- **Format**:
+```json
+[
+  {
+    "question": "List all Pseudomonas aeruginosa genome IDs",
+    "reasoning_trace": "<think>I need to search for genomes...</think><action>search_genomes('Pseudomonas aeruginosa')</action>",
+    "execution_results": [{"genome_id": "511145.12", "genome_name": "Pseudomonas aeruginosa PAO1"}],
+    "answer": ["511145.12", "287.1", "208964.1"],
+    "success_metrics": {"execution_success_rate": 1.0, "reasoning_quality": 0.9}
+  }
+]
+```
+
+### 2. **Training/Validation Data** (Standard)
+- **Files**: `data/bio/train.parquet`, `data/bio/test.parquet`
+- **Purpose**: Primary training and validation data
+- **Generation**: Created from `bio_questions.json` via preprocessing script
+- **Format**: Standard parquet with `prompt`, `ability`, `reward_model`, `extra_info` columns
+
+### 3. **Accumulated Traces** (Runtime Bootstrapping)
+- **Location**: In-memory `bio_reasoning` dataset (Ray remote actor)
+- **Purpose**: Accumulates successful reasoning traces during training for continuous improvement
+- **Source**: Generated automatically from model outputs during training
+- **Persistence**: 
+  - **Pickle**: Saved in checkpoint as `datasets/datasets.pkl` (for resuming training)
+  - **JSON**: Exported as `datasets/bio_reasoning_traces.json` (human-readable format)
+
+## Setup Instructions
+
+### Step 1: Create Questions File
+Create `data/bio_questions.json` with your bio questions and expected answers:
+```json
+[
+  {
+    "question": "List all Pseudomonas aeruginosa genome IDs",
+    "answer": ["511145.12", "287.1", "208964.1"]
+  }
+]
+```
+
+### Step 2: Generate Parquet Files
+Convert questions to standard parquet format:
+```bash
+python absolute_zero_reasoner/data_construction/bio_bvbrc_preprocess.py \
+  --bio_data_path data/bio_questions.json \
+  --local_dir data/bio
+```
+
+### Step 3: (Optional) Create Manual Solutions
+Create `data/bio_manual_solutions.json` with curated reasoning traces for better bootstrapping.
+
+### Step 4: Configure Training
+The config automatically uses:
+- `manual_bio_solutions_path: data/bio_manual_solutions.json` (for bootstrapping)
+- `train_files: data/bio/train.parquet` (for training)
+- `val_files: data/bio/test.parquet` (for validation)
+
+## Training Flow
+
+1. **Startup**: Manual solutions (if present) seed the `bio_reasoning` dataset
+2. **Training**: Model samples from original questions + accumulated successful traces  
+3. **Generation**: Creates new `<think>` + `<action>` reasoning with BV-BRC API calls
+4. **Evaluation**: BV-BRC executor validates API calls and extracts answers
+5. **Bootstrapping**: Successful traces are added back to the dataset for future training
+6. **Validation**: Uses parquet files with ground truth answers for evaluation
+
+## Key Architecture Notes
+
+- ✅ **Consistent parquet usage**: Both training and validation use parquet files
+- ✅ **Bootstrap from success**: Accumulates good traces automatically during training  
+- ✅ **Manual seeding**: Optional high-quality examples for better initial performance
+- ❌ **No JSON during training**: `bio_questions.json` is only used to generate parquet files
+
+This architecture ensures consistent data handling while enabling continuous self-improvement through successful trace accumulation.
+
+## Inspecting & Reusing Accumulated Traces
+
+### **View Accumulated Traces**
+During and after training, accumulated traces are saved in JSON format:
+```bash
+# Location: {checkpoint_dir}/datasets/bio_reasoning_traces.json
+cat checkpoints/bio_reasoning/bio_reasoning/bvbrc_pseudo_chain/datasets/bio_reasoning_traces.json
+```
+
+### **Format Example**
+```json
+[
+  {
+    "question": "List all Pseudomonas aeruginosa genome IDs",
+    "reasoning_trace": "<think>I need to search for genomes of this species...</think><action>search_genomes('Pseudomonas aeruginosa')</action>",
+    "execution_results": [{"genome_id": "511145.12", "genome_name": "Pseudomonas aeruginosa PAO1"}],
+    "answer": ["511145.12", "287.1", "208964.1"],
+    "success_metrics": {"execution_success_rate": 1.0, "reasoning_quality": 0.85}
+  }
+]
+```
+
+### **Reuse as Manual Solutions**
+High-quality accumulated traces can be copied to `data/bio_manual_solutions.json` to bootstrap future training runs:
+```bash
+# Copy best traces for reuse
+cp checkpoints/.../datasets/bio_reasoning_traces.json data/bio_manual_solutions.json
+# Edit to keep only highest quality traces
+```
 
 
 <!-- ============================================== -->
