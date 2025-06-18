@@ -177,7 +177,7 @@ trainer:
 reward_fn:
   extraction_type: none  # Bio reasoning doesn't need math extraction
   math_metric: deepscaler
-  splitter: "Assistant:"
+  splitter: ""  # No splitter needed for bio reasoning
   boxed_retry: False
 
 azr:
