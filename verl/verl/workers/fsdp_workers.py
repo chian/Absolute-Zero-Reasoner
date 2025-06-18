@@ -662,22 +662,13 @@ class CriticWorker(Worker):
             warnings.simplefilter("ignore")
             setattr(critic_model_config, 'classifier_dropout', 0.)
             setattr(critic_model_config, 'hidden_dropout', '0')
-            model_type = getattr(critic_model_config, "model_type", "")
-            if model_type in ["llama", "deepseek-llm"]:
-                # Use CausalLM + value head for Llama/DeepSeek
-                critic_module = create_huggingface_critic(
-                    model_name=local_path,
-                    override_config_kwargs=override_config,
-                    automodel_kwargs={"torch_dtype": torch_dtype}
-                )
-            else:
-                critic_module = AutoModelForTokenClassification.from_pretrained(
-                    pretrained_model_name_or_path=local_path,
-                    torch_dtype=torch_dtype,
-                    config=critic_model_config,
-                    attn_implementation='flash_attention_2',
-                    trust_remote_code=trust_remote_code
-                )
+            critic_module = AutoModelForTokenClassification.from_pretrained(
+                pretrained_model_name_or_path=local_path,
+                torch_dtype=torch_dtype,
+                config=critic_model_config,
+                attn_implementation='flash_attention_2',
+                trust_remote_code=trust_remote_code
+            )
 
             # some parameters may not in torch_dtype
             critic_module.to(torch_dtype)

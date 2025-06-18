@@ -35,7 +35,7 @@ install_requires = [
   'pylatexenc',
   'ray>=2.10',
   'tensordict<0.6',
-  'transformers',
+  'transformers<=4.46.0',
   'vllm<=0.6.3',
   'wandb',
 ]
