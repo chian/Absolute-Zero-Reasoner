@@ -37,7 +37,7 @@ def preprocess_bio_bvbrc_data(bio_data_path: str, local_dir: str):
                 'split': 'train' if idx < len(bio_data) * 0.8 else 'test',
                 'index': idx,
                 'question': item['question'],
-                'answer': item['answer']
+                'answer': json.dumps(item['answer']) if not isinstance(item['answer'], str) else item['answer']
             }
         }
         
