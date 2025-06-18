@@ -900,7 +900,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             parquet_files=temp_parquet_path,
             tokenizer=self.tokenizer,
             prompt_key='prompt',
-            max_prompt_length=self.max_prompt_length,
+            max_prompt_length=self.config.data.max_prompt_length,
             filter_prompts=True,
             return_raw_chat=self.config.data.get('return_raw_chat', False),
             truncation='error'
@@ -1100,7 +1100,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     splitter=self.config.azr.reward.splitter,
                     output_path=self.config.trainer.default_local_dir,
                     debug=self.config.azr.reward.debug,
-                    max_prompt_length=self.max_prompt_length,
+                    max_prompt_length=self.config.data.max_prompt_length,
                     bvbrc_timeout=self.config.azr.execute_max_timeout,
                     enable_pseudo_chain=True,
                     max_fix_iterations=3,
