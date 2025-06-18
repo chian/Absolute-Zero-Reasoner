@@ -79,7 +79,7 @@ lark==1.2.2
 latex2sympy2_extended==1.10.1
 liger_kernel==0.5.4
 llvmlite==0.43.0
-lm-format-enforcer==0.10.11
+lm-format-enforcer==0.10.6
 lxml==5.3.1
 mando==0.7.1
 markdown-it-py==3.0.0
@@ -114,7 +114,7 @@ omegaconf==2.3.0
 openai==1.65.4
 opencv-python-headless==4.11.0.86
 orjson==3.10.15
-outlines==0.1.11
+outlines==0.0.46
 outlines_core==0.1.26
 pandas==2.2.3
 partial-json-parser==0.2.1.1.post5
@@ -178,6 +178,8 @@ tiktoken==0.9.0
 timeout-decorator==0.5.0
 tokenizers==0.21.0
 tomli==2.2.1
+torch==2.4.0
+torchvision==0.19.0
 tqdm==4.67.1
 tree-sitter==0.24.0
 tree-sitter-python==0.23.6
@@ -194,7 +196,7 @@ wandb==0.19.8
 watchfiles==1.0.4
 websockets==15.0.1
 wget==3.2
-xformers==0.0.28.post3
+xformers==0.0.27.post2
 xgrammar==0.1.11
 xxhash==3.5.0
 yarl==1.18.3

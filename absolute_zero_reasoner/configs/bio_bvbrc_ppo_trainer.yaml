@@ -164,14 +164,110 @@ azr:
   problem_types:
     - bio_bvbrc  # Only bio reasoning
   bio_data_path: data/bio_questions.json  # Path to our questions file
+  pred_data_mix_strategy: "max_new"  # [uniform_total, max_new, half_new, step]
+  gen_data_probabilities_strategy: "uniform"  # [uniform, step]
+  past_epoch_window: 1
+  seed_dataset: null
+  error_seed_dataset: null
+  output_seed_path: null
+  output_error_seed_path: null
+  output_code_f_seed_path: null
+  code_f_seed_dataset: null
+  pretrain_pred_steps: -1
   executor: bvbrc_shell  # Use BV-BRC shell executor
+  ast_check: True
   execute_max_timeout: 30  # Longer timeout for API calls
   random_print_max_programs: 3
   train_propose: False  # Not used for bio reasoning
   data_selection_strategy:
+    io_n: 6
     update_iteration: 1
     data_len: 64  # Batch size for bio questions
+    seed_batch_factor: 4
+    content_max_length: 8096
+    valid_program_filter: all # [all (all valids), non_one (all valids except 100% accuracy), non_extremes (all valids except 0% and 100% accuracy)]
+    max_programs: null
+    batched_estimate: False
+    composite_function_n_min: -1
+    composite_function_n_max: -1
+    composite_chance: 0.5
+    composite_start_step: -1
+    max_programs_initial: -1
+    composite_chance_initial: 0.5
+    composite_scheduler:
+      enabled: False
+      update_num_programs_start: 101
+      update_num_programs_interval: 50
+      num_programs_max: 3
+      update_probability_start: 101
+      update_probability_interval: 50
+      update_probability_max: 0.8
+      update_probability_increment: 0.01
+    num_inputs: 10 # for code_f, how many inputs to generate
+    banned_words:
+      - logging
+      - random
+      - multiprocessing
+      - pebble
+      - subprocess
+      - threading
+      - datetime
+      - time
+      - hashlib
+      - hmac
+      - bcrypt
+      - os.sys
+      - os.path
+      - sys.exit
+      - os.environ
+      - calendar
+      - datetime
+    banned_keywords_for_errors_and_exceptions:
+      # - raise
+      # - assert
+      # - try
+      # - except
   reward:
+    n_samples: 8
     extract_code_block: False  # Bio reasoning doesn't use code blocks
+    code_f_reward_type: binary # [accuracy, binary]
     generation_reward_config:
-      format_reward: True 
+      format_reward: True
+      reject_multiple_functions: True
+      reject_test_input_in_code: False
+      f_replace_location: not_first # [not_first, any_last, any_first, not_last]
+      intrinsic_combine_method: sum # [sum, multiply, sum_multiply]
+      remove_after_return: False # remove global variables
+      remove_comments: False
+      remove_print: False
+      use_original_code_as_ref: False
+      generation_accuracy_convertion: one_minus
+      remove_input_from_snippet: False # prompting
+      include_references: True # ablation for unconditional generation
+      complexity_reward:
+        enabled: False
+        coef: 0.0
+        max: 0.5
+      mean_edit_distance_reward:
+        enabled: False
+        coef: 0.0
+        max: 0.5
+      halstead_reward:
+        enabled: False
+        coef: 0.0
+        max: 0.5
+      answer_diversity_reward:
+        enabled: False
+        coef: 0.0
+        max: 0.5
+        hierarchical: False
+      f_input_answer_diversity_reward:
+        enabled: False
+        coef: 0.0
+        max: 0.5
+        hierarchical: False
+      f_output_answer_diversity_reward:
+        enabled: False
+        coef: 0.0
+        max: 0.5
+        hierarchical: False 
