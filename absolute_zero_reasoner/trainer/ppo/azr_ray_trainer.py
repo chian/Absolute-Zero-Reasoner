@@ -1726,16 +1726,16 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     PrettyPrinter.status("DATA", f"Length of {dataset_name}: 0 (not available)", "info")
         else:
             PrettyPrinter.section_header(f"Creating initial seed datasets")
-                
-                # Seed bio reasoning dataset with manual solutions if bio tasks are present
-                if 'bio_bvbrc' in self.config.azr.problem_types:
-                    self._seed_bio_reasoning_dataset()
-                
-                # create init dataset - only for code tasks, not bio tasks
-                code_problem_types = [pt for pt in self.config.azr.problem_types if pt.startswith('code_')]
-                need_seed_dataset = any(problem_type != 'code_e' for problem_type in code_problem_types) or 'code_f' in code_problem_types
-                need_error_dataset = 'code_e' in code_problem_types
-                need_code_f_dataset = 'code_f' in code_problem_types
+            
+            # Seed bio reasoning dataset with manual solutions if bio tasks are present
+            if 'bio_bvbrc' in self.config.azr.problem_types:
+                self._seed_bio_reasoning_dataset()
+            
+            # create init dataset - only for code tasks, not bio tasks
+            code_problem_types = [pt for pt in self.config.azr.problem_types if pt.startswith('code_')]
+            need_seed_dataset = any(problem_type != 'code_e' for problem_type in code_problem_types) or 'code_f' in code_problem_types
+            need_error_dataset = 'code_e' in code_problem_types
+            need_code_f_dataset = 'code_f' in code_problem_types
 
             # Initialize with defaults
             seed_dataset = []
