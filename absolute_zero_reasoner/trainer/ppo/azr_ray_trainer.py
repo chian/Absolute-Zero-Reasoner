@@ -905,7 +905,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             prompts.append(prompt_data)
         
         # Create temporary parquet file
-        temp_file = f'{self.output_path}/temp_bio_bvbrc.parquet'
+        temp_file = f'{self._code_dir}/temp_bio_bvbrc.parquet'
         pd.DataFrame(prompts).to_parquet(temp_file)
         
         # Create dataset
