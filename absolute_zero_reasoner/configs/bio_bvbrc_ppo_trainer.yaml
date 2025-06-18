@@ -18,7 +18,7 @@ data:
 actor_rollout_ref:
   hybrid_engine: True
   model:
-    path: deepseek-ai/deepseek-llm-7b-chat
+    path: google/gemma-2-2b-it 
     pretrained_tokenizer: True
     external_lib: null
     override_config: { }
