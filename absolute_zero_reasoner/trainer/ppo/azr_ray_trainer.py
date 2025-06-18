@@ -252,14 +252,17 @@ class DatasetManager:
             'error': [],
             'problem': [],
             'error_seed': [],
+            'bio_reasoning': [],  # Stores successful bio reasoning traces
             'input_steps': [],  # Parallel list storing step numbers
             'output_steps': [], # Parallel list storing step numbers
             'error_steps': [], # Parallel list storing step numbers
             'problem_steps': [], # Parallel list storing step numbers
+            'bio_reasoning_steps': [], # Parallel list storing step numbers
             'input_steps_counter': defaultdict(int),
             'output_steps_counter': defaultdict(int),
             'error_steps_counter': defaultdict(int),
             'problem_steps_counter': defaultdict(int),
+            'bio_reasoning_steps_counter': defaultdict(int),
         }
         self.type_counters = {
             'input_types': defaultdict(create_default_dict),
@@ -273,14 +276,17 @@ class DatasetManager:
             'error': threading.Lock(),
             'problem': threading.Lock(),
             'error_seed': threading.Lock(),
+            'bio_reasoning': threading.Lock(),
             'input_steps': threading.Lock(),
             'output_steps': threading.Lock(),
             'error_steps': threading.Lock(),
             'problem_steps': threading.Lock(),
+            'bio_reasoning_steps': threading.Lock(),
             'input_steps_counter': threading.Lock(),
             'output_steps_counter': threading.Lock(),
             'error_steps_counter': threading.Lock(),
             'problem_steps_counter': threading.Lock(),
+            'bio_reasoning_steps_counter': threading.Lock(),
             'input_types': threading.RLock(),
             'output_types': threading.RLock(),
             'error_types': threading.RLock(),
@@ -395,6 +401,16 @@ class DatasetManager:
             self.datasets['problem_steps_counter'][global_step] += len(entries)
             return len(entries)
 
+    def add_bio_reasoning_batch(self, entries: List[Dict], global_step: int):
+        """Add successful bio reasoning traces to the dataset"""
+        with self.locks['bio_reasoning'], self.locks['bio_reasoning_steps'], self.locks['bio_reasoning_steps_counter']:
+            # Bio reasoning traces don't have input/output types like code, but we could track other metadata
+            
+            self.datasets['bio_reasoning'].extend(entries)
+            self.datasets['bio_reasoning_steps'].extend([global_step]*len(entries))
+            self.datasets['bio_reasoning_steps_counter'][global_step] += len(entries)
+            return len(entries)
+
     def get_snippets(self) -> List[Dict]:
         # get the snippets from input and output datasets merged together
         snippets = []
@@ -444,6 +460,10 @@ class DatasetManager:
             assert len(self.datasets['problem']) == len(self.datasets['problem_steps']), \
                 "Problem data/steps mismatch!"
             return list(zip(deepcopy(self.datasets['problem']), self.datasets['problem_steps']))
+        elif name == 'bio_reasoning':
+            assert len(self.datasets['bio_reasoning']) == len(self.datasets['bio_reasoning_steps']), \
+                "Bio reasoning data/steps mismatch!"
+            return list(zip(deepcopy(self.datasets['bio_reasoning']), self.datasets['bio_reasoning_steps']))
         raise ValueError(f"Invalid dataset name: {name}")
 
     def get_steps_dataset(self, name) -> List[int]:
@@ -455,6 +475,8 @@ class DatasetManager:
             return self.datasets['error_steps']
         elif name == 'problem':
             return self.datasets['problem_steps']
+        elif name == 'bio_reasoning':
+            return self.datasets['bio_reasoning_steps']
         raise ValueError(f"Invalid dataset name: {name}")
 
     def truncate_datasets(self, max_length: int, name: str) -> Tuple[int, int]:
@@ -496,6 +518,13 @@ class DatasetManager:
                 self.datasets['problem'] = self.datasets['problem'][:max_length]
                 truncated_length = before_length - len(self.datasets['problem'])
                 return truncated_length, before_length
+        elif name == 'bio_reasoning':
+            with self.locks['bio_reasoning'], self.locks['bio_reasoning_steps']:
+                before_length = len(self.datasets['bio_reasoning'])
+                self.datasets['bio_reasoning'] = self.datasets['bio_reasoning'][:max_length]
+                self.datasets['bio_reasoning_steps'] = self.datasets['bio_reasoning_steps'][:max_length]
+                truncated_length = before_length - len(self.datasets['bio_reasoning'])
+                return truncated_length, before_length
         else:
             raise ValueError(f"Invalid dataset name: {name}")
 
@@ -512,10 +541,10 @@ class DatasetManager:
         # First create a copy of the current empty structure
         default_structure = {
             'input': [], 'output': [], 'seed': [], 'error': [], 'problem': [],
-            'error_seed': [], 'input_steps': [], 'output_steps': [], 'error_steps': [],
-            'problem_steps': [], 'input_steps_counter': defaultdict(int),
+            'error_seed': [], 'bio_reasoning': [], 'input_steps': [], 'output_steps': [], 'error_steps': [],
+            'problem_steps': [], 'bio_reasoning_steps': [], 'input_steps_counter': defaultdict(int),
             'output_steps_counter': defaultdict(int), 'error_steps_counter': defaultdict(int),
-            'problem_steps_counter': defaultdict(int)
+            'problem_steps_counter': defaultdict(int), 'bio_reasoning_steps_counter': defaultdict(int)
         }
         
         # Extract datasets
@@ -801,26 +830,78 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
     def _create_train_bio_bvbrc_dataloader(self, data_len: int) -> DataLoader:
         """
         Create a dataloader for bio_bvbrc training data using question-answer pairs.
+        Now includes sampling from accumulated successful traces for bootstrapping.
         """
         from absolute_zero_reasoner.data_construction.constructor import get_gen_bio_bvbrc_prompt
         
-        # Load bio question-answer data
+        # Load bio question-answer data (original dataset)
         bio_data_path = self.config.azr.get('bio_data_path', 'data/bio_questions.json')
-        bio_data = self._load_bio_question_data(bio_data_path)
+        original_bio_data = self._load_bio_question_data(bio_data_path)
         
-        # Sample questions for this batch
-        sampled_items = random.sample(bio_data, min(data_len, len(bio_data)))
+        # Get accumulated successful bio reasoning traces
+        accumulated_traces = ray.get(self.dataset_manager.get_dataset.remote('bio_reasoning'))
+        
+        # Combine original questions with accumulated successful traces
+        all_bio_data = []
+        
+        # Add original questions
+        for item in original_bio_data:
+            all_bio_data.append({
+                'type': 'original',
+                'question': item['question'],
+                'answer': item['answer'],
+                'source': 'original_dataset'
+            })
+        
+        # Add successful traces (reformat for consistency)
+        for trace in accumulated_traces:
+            if trace.get('reasoning_trace') and trace.get('success_metrics', {}).get('execution_success_rate', 0) > 0.5:
+                all_bio_data.append({
+                    'type': 'trace',
+                    'question': trace['question'],
+                    'answer': trace['answer'],
+                    'reasoning_trace': trace['reasoning_trace'],
+                    'source': 'accumulated_traces'
+                })
+        
+        # Sample from combined dataset (prefer successful traces if available)
+        if len(accumulated_traces) > 0:
+            # Use a mix: 30% original questions, 70% successful traces
+            original_count = min(len(original_bio_data), max(1, int(data_len * 0.3)))
+            trace_count = data_len - original_count
+            
+            sampled_original = random.sample(
+                [item for item in all_bio_data if item['type'] == 'original'], 
+                min(original_count, len([item for item in all_bio_data if item['type'] == 'original']))
+            )
+            sampled_traces = random.sample(
+                [item for item in all_bio_data if item['type'] == 'trace'], 
+                min(trace_count, len([item for item in all_bio_data if item['type'] == 'trace']))
+            )
+            sampled_items = sampled_original + sampled_traces
+        else:
+            # No accumulated traces yet, use original questions
+            sampled_items = random.sample(original_bio_data, min(data_len, len(original_bio_data)))
+            sampled_items = [{'type': 'original', 'question': item['question'], 'answer': item['answer'], 'source': 'original_dataset'} for item in sampled_items]
         
         # If we need more data than available, cycle through
         while len(sampled_items) < data_len:
-            additional_items = random.sample(bio_data, min(data_len - len(sampled_items), len(bio_data)))
+            additional_items = random.sample(all_bio_data, min(data_len - len(sampled_items), len(all_bio_data)))
             sampled_items.extend(additional_items)
         
         # Generate prompts
         prompts = []
         for item in sampled_items:
-            prompt_data = get_gen_bio_bvbrc_prompt(item['question'])
+            if item['type'] == 'trace' and 'reasoning_trace' in item:
+                # For successful traces, we can use them as few-shot examples or modify the prompt
+                prompt_data = get_gen_bio_bvbrc_prompt(item['question'])
+                prompt_data['example_trace'] = item['reasoning_trace']  # Add successful example
+            else:
+                # For original questions, use standard prompt
+                prompt_data = get_gen_bio_bvbrc_prompt(item['question'])
+            
             prompt_data['ground_truth'] = item['answer']  # Add expected answer
+            prompt_data['data_source'] = item['source']
             prompts.append(prompt_data)
         
         # Create temporary parquet file
@@ -842,6 +923,12 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         os.remove(temp_file)
         
         sampler = RandomSampler(data_source=rlhf_dataset)
+        
+        PrettyPrinter.status(
+            "DATA", 
+            f"Bio dataloader: {len(accumulated_traces)} accumulated traces, {len(original_bio_data)} original questions", 
+            "info"
+        )
         
         return DataLoader(
             dataset=rlhf_dataset,
@@ -881,6 +968,42 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     "answer": ["93061.5", "282458.1", "282459.1", "426430.1"]
                 }
             ]
+
+    def _process_bio_reasoning_traces(self, valid_programs: List[Dict]) -> List[Dict]:
+        """
+        Process successful bio reasoning traces for storage in the dataset.
+        
+        Args:
+            valid_programs: List of successful bio reasoning programs/traces
+            
+        Returns:
+            List of processed bio reasoning traces ready for dataset storage
+        """
+        processed_traces = []
+        
+        for program in valid_programs:
+            # Extract key components from the bio reasoning trace
+            trace_entry = {
+                'question': program.get('user_query', ''),
+                'reasoning_trace': program.get('processed_generation', ''),
+                'execution_results': program.get('execution_results', []),
+                'success_metrics': {
+                    'has_actions': program.get('has_actions', 0),
+                    'actions_executed': program.get('actions_executed', 0),
+                    'successful_executions': program.get('successful_executions', 0),
+                    'failed_executions': program.get('failed_executions', 0),
+                    'execution_success_rate': program.get('execution_success_rate', 0.0),
+                    'reasoning_quality': program.get('reasoning_quality', 0.0),
+                },
+                'answer': program.get('extracted_answer', ''),
+                'ground_truth': program.get('ground_truth', ''),
+                'data_source': 'bio_reasoning_generated',
+                'uid': program.get('uid', ''),
+            }
+            
+            processed_traces.append(trace_entry)
+        
+        return processed_traces
 
     def _compute_batch(self, batch: DataProto, metrics: dict, timing_raw: dict, problem_type: str, executor: PythonExecutor) -> tuple[DataProto, dict]:
         PrettyPrinter.section_header(f"Computing batch for {problem_type}")
@@ -964,7 +1087,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     split='train',
                     reward_fn_extraction_type=self.config.azr.reward.reward_fn_extraction_type,
                     splitter=self.config.azr.reward.splitter,
-                    output_path=self.output_path,
+                    output_path=self.config.trainer.default_local_dir,
                     debug=self.config.azr.reward.debug,
                     max_prompt_length=self.max_prompt_length,
                     bvbrc_timeout=self.config.azr.execute_max_timeout,
@@ -1054,9 +1177,15 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     processed_programs = process_elements(valid_programs)
                     ray.get(self.dataset_manager.add_problem_batch.remote(processed_programs, self.global_steps))
             elif problem_type == 'gen_bio_bvbrc':
-                # Bio reasoning doesn't use the traditional dataset management
-                # The pseudo-chain processor handles execution inline
-                pass
+                # Add successful bio reasoning traces back to the dataset for future training
+                if valid_programs:
+                    processed_bio_traces = self._process_bio_reasoning_traces(valid_programs)
+                    ray.get(self.dataset_manager.add_bio_reasoning_batch.remote(processed_bio_traces, self.global_steps))
+                    PrettyPrinter.status(
+                        "DATA", 
+                        f"Added {len(processed_bio_traces)} successful bio reasoning traces to dataset", 
+                        "success"
+                    )
             else:
                 raise ValueError(f'Invalid problem type: {problem_type}')
 
@@ -1088,17 +1217,16 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 elif problem_type.endswith('code_f'):
                     dataset_key = 'problem'
                 elif problem_type == 'gen_bio_bvbrc':
-                    # Bio reasoning doesn't use traditional dataset management
-                    train_metrics[f'{problem_type}/num_valid_programs'] = len(valid_programs) if valid_programs else 0
+                    # Bio reasoning uses the bio_reasoning dataset for tracking
+                    dataset_key = 'bio_reasoning'
                 else:
                     raise ValueError(f'Invalid problem type: {problem_type}')
                 
-                if problem_type != 'gen_bio_bvbrc':
-                    train_metrics[f'{problem_type}/num_valid_programs'] = ray.get(
-                        self.dataset_manager.get_recent_additions.remote(
-                            dataset_key, self.global_steps, self._past_epoch_window
-                        )
+                train_metrics[f'{problem_type}/num_valid_programs'] = ray.get(
+                    self.dataset_manager.get_recent_additions.remote(
+                        dataset_key, self.global_steps, self._past_epoch_window
                     )
+                )
             metrics.update(train_metrics)
             batch.batch['token_level_scores'] = reward_tensor
 
@@ -1570,8 +1698,13 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         if self.loaded_datasets:
             PrettyPrinter.section_header(f"Resuming training from checkpoint")
             # print the lengths of the datasets
-            for dataset_name in ['input', 'output', 'error', 'input_steps', 'output_steps', 'error_steps', 'input_steps_counter', 'output_steps_counter', 'error_steps_counter']:
-                PrettyPrinter.status("DATA", f"Length of {dataset_name}: {ray.get(self.dataset_manager.get_dataset_size.remote(dataset_name))}", "info")
+            for dataset_name in ['input', 'output', 'error', 'bio_reasoning', 'input_steps', 'output_steps', 'error_steps', 'bio_reasoning_steps', 'input_steps_counter', 'output_steps_counter', 'error_steps_counter', 'bio_reasoning_steps_counter']:
+                try:
+                    size = ray.get(self.dataset_manager.get_dataset_size.remote(dataset_name))
+                    PrettyPrinter.status("DATA", f"Length of {dataset_name}: {size}", "info")
+                except:
+                    # Handle missing datasets gracefully
+                    PrettyPrinter.status("DATA", f"Length of {dataset_name}: 0 (not available)", "info")
         else:
             PrettyPrinter.section_header(f"Creating initial seed datasets")
             # create init dataset - only for code tasks, not bio tasks
@@ -1881,6 +2014,13 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                             f"Number of programs in the code_f dataset: {ray.get(self.dataset_manager.get_dataset_size.remote('problem'))}", 
                             "info"
                         )
+                    if 'bio_bvbrc' in self.config.azr.problem_types:
+                        bio_reasoning_size = ray.get(self.dataset_manager.get_dataset_size.remote('bio_reasoning'))
+                        PrettyPrinter.status(
+                            "DATA", 
+                            f"Number of successful bio reasoning traces: {bio_reasoning_size}", 
+                            "info"
+                        )
                     if self.config.trainer.save_freq > 0 and \
                             self.global_steps % self.config.trainer.save_freq == 0:
                         with _timer('save_checkpoint', timing_raw):
@@ -2119,7 +2259,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         # Filter datasets based on global step
         if self.global_steps > 0:
             # Filter datasets that have step info
-            for dataset_key in ['input', 'output', 'error', 'problem']:
+            for dataset_key in ['input', 'output', 'error', 'problem', 'bio_reasoning']:
                 steps_key = f"{dataset_key}_steps"
                 if steps_key in datasets_with_types and dataset_key in datasets_with_types:
                     # Create lists of entries to keep
