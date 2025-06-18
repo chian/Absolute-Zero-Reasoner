@@ -2039,17 +2039,35 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             test_batch = test_batch.union(test_output_gen_batch)
 
             # evaluate using reward_function
-            # For bio_bvbrc tasks, use specific problem type instead of None
+            # For bio_bvbrc tasks, use the specialized reward manager
             if 'bio_bvbrc' in self.config.azr.problem_types and len(self.config.azr.problem_types) == 1:
-                problem_type_for_validation = 'bio_bvbrc'
+                # Use the bio reasoning reward manager for validation
+                from absolute_zero_reasoner.rewards.bio_bvbrc_reward_manager import BioReasoningRewardManager
+                bio_reward_manager = BioReasoningRewardManager(
+                    tokenizer=self.tokenizer,
+                    num_examine=1,  # For validation
+                    split='test',
+                    reward_fn_extraction_type=self.config.reward_fn.extraction_type,
+                    splitter=self.config.reward_fn.splitter,
+                    output_path=self.config.trainer.default_local_dir,
+                    debug=self.config.trainer.debug,
+                    max_prompt_length=self.config.data.max_validation_prompt_length,
+                    bvbrc_timeout=self.config.azr.execute_max_timeout,
+                    enable_pseudo_chain=True,
+                    max_fix_iterations=3,
+                    boxed_retry=self.config.reward_fn.boxed_retry,
+                )
+                reward_tensor, eval_metrics, _, _ = bio_reward_manager(
+                    test_batch,
+                    problem_type='gen_bio_bvbrc',
+                    executor=self._executor,
+                )
             else:
-                problem_type_for_validation = None
-            
-            reward_tensor, eval_metrics, _, _ = self.val_reward_fn(
-                test_batch,
-                problem_type=problem_type_for_validation,
-                executor=self._executor,
-            )
+                reward_tensor, eval_metrics, _, _ = self.val_reward_fn(
+                    test_batch,
+                    problem_type=None,
+                    executor=self._executor,
+                )
             for k, v in eval_metrics.items():
                 all_eval_metrics[k].append(v)
 
