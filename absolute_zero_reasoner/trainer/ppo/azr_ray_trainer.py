@@ -1062,6 +1062,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 batch = batch.union(reward_tensor)
 
             input_type_counters, output_type_counters, error_type_counters = None, None, None
+            bio_reward_manager = None  # Initialize for bio tasks
+            
             # Get the appropriate type counters based on problem type
             if problem_type == 'gen_code_i':
                 input_type_counters = ray.get(self.dataset_manager.get_type_counter.remote('input'))
@@ -1072,6 +1074,24 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             elif problem_type == 'gen_code_f':
                 input_type_counters = ray.get(self.dataset_manager.get_type_counter.remote('input'))
                 output_type_counters = ray.get(self.dataset_manager.get_type_counter.remote('output'))
+
+            # Initialize bio reward manager if needed
+            if problem_type == 'gen_bio_bvbrc':
+                from absolute_zero_reasoner.rewards.bio_bvbrc_reward_manager import BioReasoningRewardManager
+                bio_reward_manager = BioReasoningRewardManager(
+                    tokenizer=self.tokenizer,
+                    num_examine=self.config.azr.reward.num_examine,
+                    split='train',
+                    reward_fn_extraction_type=self.config.azr.reward.reward_fn_extraction_type,
+                    splitter=self.config.azr.reward.splitter,
+                    output_path=self.config.trainer.default_local_dir,
+                    debug=self.config.azr.reward.debug,
+                    max_prompt_length=self.config.data.max_prompt_length,
+                    bvbrc_timeout=self.config.azr.execute_max_timeout,
+                    enable_pseudo_chain=True,
+                    max_fix_iterations=3,
+                    boxed_retry=self.config.azr.reward.boxed_retry,
+                )
 
             # make sure actor_rollout_wg n > 1
             if problem_type.startswith('gen'):
@@ -1093,22 +1113,6 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     'executor': executor,
                 }
             elif problem_type == 'gen_bio_bvbrc':
-                # Use the bio reasoning reward manager
-                from absolute_zero_reasoner.rewards.bio_bvbrc_reward_manager import BioReasoningRewardManager
-                bio_reward_manager = BioReasoningRewardManager(
-                    tokenizer=self.tokenizer,
-                    num_examine=self.config.azr.reward.num_examine,
-                    split='train',
-                    reward_fn_extraction_type=self.config.azr.reward.reward_fn_extraction_type,
-                    splitter=self.config.azr.reward.splitter,
-                    output_path=self.config.trainer.default_local_dir,
-                    debug=self.config.azr.reward.debug,
-                    max_prompt_length=self.config.data.max_prompt_length,
-                    bvbrc_timeout=self.config.azr.execute_max_timeout,
-                    enable_pseudo_chain=True,
-                    max_fix_iterations=3,
-                    boxed_retry=self.config.azr.reward.boxed_retry,
-                )
                 reward_fn_kwargs = {
                     'data': batch,
                     'problem_type': problem_type,
