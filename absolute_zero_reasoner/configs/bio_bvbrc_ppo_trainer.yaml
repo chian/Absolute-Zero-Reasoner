@@ -3,14 +3,14 @@
 
 data:
   tokenizer: null
-  train_files: data/bio/train.parquet  # Not used for bio_bvbrc
-  val_files: data/bio/test.parquet     # Not used for bio_bvbrc
+  train_files: data/bio/train.parquet
+  val_files: data/bio/test.parquet
   prompt_key: prompt
   max_prompt_length: 8096
   max_response_length: 8096
   max_validation_prompt_length: 8096
-  train_batch_size: 64  # Smaller batch for bio reasoning
-  val_batch_size: 64
+  train_batch_size: 8  # Smaller batch for bio reasoning to avoid empty dataloader
+  val_batch_size: 8
   return_raw_input_ids: False
   return_raw_chat: False
   shuffle: True

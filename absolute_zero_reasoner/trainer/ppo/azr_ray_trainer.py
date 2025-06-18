@@ -14,7 +14,7 @@ import re
 
 import ray
 import torch
-from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from omegaconf import OmegaConf
 import numpy as np
 from verl.utils.dataset.rl_dataset import collate_fn
