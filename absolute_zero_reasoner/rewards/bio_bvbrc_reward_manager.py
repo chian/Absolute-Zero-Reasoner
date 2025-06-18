@@ -83,8 +83,17 @@ class BioReasoningRewardManager:
             self.tokenizer.encode(sequences_str), skip_special_tokens=True
         )
         
-        # Extract the generation part
-        generation = non_special_tokens_sequences_str.split(self.splitter)[1].strip().strip('\"\'')
+        # Extract the generation part - handle cases where splitter is empty or not found
+        if self.splitter and self.splitter.strip():
+            split_parts = non_special_tokens_sequences_str.split(self.splitter)
+            if len(split_parts) > 1:
+                generation = split_parts[1].strip().strip('\"\'')
+            else:
+                # If splitter not found, use the entire text
+                generation = non_special_tokens_sequences_str.strip().strip('\"\'')
+        else:
+            # If splitter is empty, use the entire text
+            generation = non_special_tokens_sequences_str.strip().strip('\"\'')
         
         # Process with pseudo-chain if enabled
         if self.enable_pseudo_chain and self.pseudo_chain_processor:
