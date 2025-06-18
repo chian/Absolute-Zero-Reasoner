@@ -6,9 +6,9 @@ data:
   train_files: data/bio/train.parquet
   val_files: data/bio/test.parquet
   prompt_key: prompt
-  max_prompt_length: 8096
-  max_response_length: 8096
-  max_validation_prompt_length: 8096
+  max_prompt_length: 2048
+  max_response_length: 2048
+  max_validation_prompt_length: 2048
   train_batch_size: 8  # Smaller batch for bio reasoning to avoid empty dataloader
   val_batch_size: 8
   return_raw_input_ids: False
@@ -205,9 +205,9 @@ azr:
   data_selection_strategy:
     io_n: 6
     update_iteration: 1
-    data_len: 64  # Batch size for bio questions
+    data_len: 8  # Match the train_batch_size
     seed_batch_factor: 4
-    content_max_length: 8096
+    content_max_length: 2048  # Match the max_prompt_length
     valid_program_filter: all # [all (all valids), non_one (all valids except 100% accuracy), non_extremes (all valids except 0% and 100% accuracy)]
     max_programs: null
     batched_estimate: False
