@@ -99,6 +99,9 @@ def extract_answer(solution_str: str, extraction_type: str, boxed_retry: bool = 
     elif extraction_type.startswith('boxed'):
         answer = last_boxed_only_string(solution_str)
         return answer.strip() if answer is not None else ''
+    elif extraction_type == 'none':
+        # For bio reasoning and other tasks that don't need special extraction
+        return solution_str.strip()
     else:
         raise ValueError(f"Invalid extraction type: {extraction_type}")
 
@@ -126,6 +129,9 @@ def get_format_reward(
             return 1.
         else:
             return 0.
+    elif extraction_type == 'none':
+        # For bio reasoning, any non-empty response gets format reward
+        return 1.0 if solution_str.strip() else 0.0
     else:
         raise ValueError(f"Invalid extraction type: {extraction_type}")
 
