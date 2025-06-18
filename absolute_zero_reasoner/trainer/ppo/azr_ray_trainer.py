@@ -1574,10 +1574,11 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 PrettyPrinter.status("DATA", f"Length of {dataset_name}: {ray.get(self.dataset_manager.get_dataset_size.remote(dataset_name))}", "info")
         else:
             PrettyPrinter.section_header(f"Creating initial seed datasets")
-            # create init dataset
-            need_seed_dataset = any(problem_type != 'code_e' for problem_type in self.config.azr.problem_types) or 'code_f' in self.config.azr.problem_types
-            need_error_dataset = 'code_e' in self.config.azr.problem_types
-            need_code_f_dataset = 'code_f' in self.config.azr.problem_types
+            # create init dataset - only for code tasks, not bio tasks
+            code_problem_types = [pt for pt in self.config.azr.problem_types if pt.startswith('code_')]
+            need_seed_dataset = any(problem_type != 'code_e' for problem_type in code_problem_types) or 'code_f' in code_problem_types
+            need_error_dataset = 'code_e' in code_problem_types
+            need_code_f_dataset = 'code_f' in code_problem_types
 
             # Initialize with defaults
             seed_dataset = []
@@ -1626,7 +1627,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
 
             if need_to_generate_seed or need_to_generate_error or need_to_generate_code_f:
                 sample_problem_types = []
-                for problem_type in self.config.azr.problem_types:
+                for problem_type in code_problem_types:  # Only consider code task types
                     if problem_type == 'code_e' and need_to_generate_error:
                         sample_problem_types.append(problem_type)
                     elif problem_type != 'code_e' and need_to_generate_seed:
