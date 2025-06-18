@@ -2039,9 +2039,15 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             test_batch = test_batch.union(test_output_gen_batch)
 
             # evaluate using reward_function
+            # For bio_bvbrc tasks, use specific problem type instead of None
+            if 'bio_bvbrc' in self.config.azr.problem_types and len(self.config.azr.problem_types) == 1:
+                problem_type_for_validation = 'bio_bvbrc'
+            else:
+                problem_type_for_validation = None
+            
             reward_tensor, eval_metrics, _, _ = self.val_reward_fn(
                 test_batch,
-                problem_type=None,
+                problem_type=problem_type_for_validation,
                 executor=self._executor,
             )
             for k, v in eval_metrics.items():
