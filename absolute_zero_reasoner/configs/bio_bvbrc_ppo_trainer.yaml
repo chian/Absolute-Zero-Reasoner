@@ -12,7 +12,7 @@ data:
   train_batch_size: 8  # Smaller batch for bio reasoning to avoid empty dataloader
   val_batch_size: 8
   return_raw_input_ids: False
-  return_raw_chat: False
+  return_raw_chat: True  # Enable chat format for bio reasoning
   shuffle: True
 
 actor_rollout_ref:
@@ -177,7 +177,7 @@ trainer:
 reward_fn:
   extraction_type: none  # Bio reasoning doesn't need math extraction
   math_metric: deepscaler
-  splitter: ""  # No splitter needed for bio reasoning
+  splitter: "Assistant:"  # Standard chat format splitter
   boxed_retry: False
 
 azr:

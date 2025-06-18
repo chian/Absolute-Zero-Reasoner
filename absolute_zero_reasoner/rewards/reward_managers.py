@@ -139,12 +139,16 @@ class CodeIORewardManager():
         extra_info = data_item.non_tensor_batch['extra_info']
         non_special_tokens_sequences_str = self.tokenizer.decode(self.tokenizer.encode(sequences_str), skip_special_tokens=True)
         
-        # Handle cases where splitter is not found in the text
-        split_parts = non_special_tokens_sequences_str.split(self.splitter)
-        if len(split_parts) > 1:
-            generation = split_parts[1].strip().strip('\"\'')
+        # Handle cases where splitter is empty or not found in the text
+        if self.splitter and self.splitter.strip():
+            split_parts = non_special_tokens_sequences_str.split(self.splitter)
+            if len(split_parts) > 1:
+                generation = split_parts[1].strip().strip('\"\'')
+            else:
+                # If splitter not found, use the entire text
+                generation = non_special_tokens_sequences_str.strip().strip('\"\'')
         else:
-            # If splitter not found, use the entire text
+            # If splitter is empty, use the entire text
             generation = non_special_tokens_sequences_str.strip().strip('\"\'')
         extracted_content = extract_answer(generation, self.reward_fn_extraction_type, boxed_retry=self.boxed_retry)
         thought = extract_thought(generation)
