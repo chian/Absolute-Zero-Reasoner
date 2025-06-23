@@ -636,6 +636,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         self.dataset_manager = DatasetManager.remote()
         self._last_cleanup_step = 0
         self._cleanup_frequency = self.config.azr.get('executor_cleanup_frequency', 5)
+        
+
 
     def cleanup(self):
         """Clean up the executor and other resources"""
@@ -881,6 +883,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                         'example_trace': trace['reasoning_trace']  # Include successful trace as example
                     }
                 })
+        
+
         
         # Sample from combined data
         if len(all_training_data) > data_len:

@@ -38,6 +38,7 @@ class BioReasoningRewardManager:
         enable_pseudo_chain: bool = True,
         max_fix_iterations: int = 3,
         boxed_retry: bool = False,
+
     ):
         self.tokenizer = tokenizer
         self.num_examine = num_examine
@@ -58,6 +59,8 @@ class BioReasoningRewardManager:
             )
         else:
             self.pseudo_chain_processor = None
+        
+
     
     def _get_data_dict(self, data_item: DataProtoItem, uid: str) -> Dict:
         """Extract data dictionary from a data item"""
@@ -233,7 +236,12 @@ class BioReasoningRewardManager:
                 # Compare with ground truth if available
                 expected_answer = data_dict.get('ground_truth')
                 if expected_answer is not None:
-                    answer_similarity = self._compute_soft_answer_similarity(actual_results, expected_answer)
+                    # Get verification mode from extra_info
+                    verification_mode = data_dict.get('extra_info', {}).get('verification_mode', 'auto')
+                    
+                    # Use raw_answer if available (original format), otherwise ground_truth
+                    expected_raw = data_dict.get('extra_info', {}).get('raw_answer', expected_answer)
+                    answer_similarity = self._compute_soft_answer_similarity(actual_results, expected_raw, verification_mode)
                     execution_reward = answer_similarity * 0.8  # Weight answer similarity highly
                     
                     # Small bonus for successful execution
@@ -269,7 +277,12 @@ class BioReasoningRewardManager:
             expected_answer = data_dict.get('ground_truth')
             if expected_answer is not None:
                 actual_results = self._extract_execution_results(data_dict['processed_generation'])
-                answer_similarity = self._compute_soft_answer_similarity(actual_results, expected_answer)
+                
+                # Get verification mode from extra_info
+                verification_mode = data_dict.get('extra_info', {}).get('verification_mode', 'auto')
+                expected_raw = data_dict.get('extra_info', {}).get('raw_answer', expected_answer)
+                
+                answer_similarity = self._compute_soft_answer_similarity(actual_results, expected_raw, verification_mode)
                 final_reward = 1.0 if answer_similarity > 0.5 else 0.0
             else:
                 final_reward = 1.0 if metrics['execution_success_rate'] > 0.5 else 0.0
@@ -306,9 +319,92 @@ class BioReasoningRewardManager:
         else:
             return None
     
-    def _compute_soft_answer_similarity(self, actual: Any, expected: Any) -> float:
+    def _compute_soft_answer_similarity(self, actual: Any, expected: Any, verification_mode: str = "auto") -> float:
         """
-        Compute soft similarity between actual and expected answers.
+        Compute similarity between actual and expected answers using specified verification mode.
+        """
+        if actual is None:
+            return 0.0
+        
+        # Use verification mode if specified, otherwise auto-detect
+        if verification_mode == "auto":
+            verification_mode = self._detect_verification_mode(expected)
+            
+        return self._verify_with_mode(actual, expected, verification_mode)
+    
+    def _detect_verification_mode(self, expected: Any) -> str:
+        """Auto-detect verification mode based on expected answer format"""
+        if isinstance(expected, str):
+            if expected.startswith("\\boxed{") and expected.endswith("}"):
+                return "boxed"
+            return "exact"
+        elif isinstance(expected, list):
+            return "list_unordered"
+        elif isinstance(expected, dict):
+            return "dict_exact"
+        else:
+            return "exact"
+    
+    def _verify_with_mode(self, actual: Any, expected: Any, verification_mode: str) -> float:
+        """Apply verification strategy based on mode"""
+        
+        if verification_mode == "exact":
+            return 1.0 if str(actual).strip() == str(expected).strip() else 0.0
+            
+        elif verification_mode == "boxed":
+            # Extract from \boxed{} format
+            from absolute_zero_reasoner.rewards.custom_evaluate import last_boxed_only_string
+            
+            actual_boxed = last_boxed_only_string(str(actual))
+            expected_boxed = last_boxed_only_string(str(expected))
+            
+            if actual_boxed is None or expected_boxed is None:
+                return 0.0
+            return 1.0 if actual_boxed.strip() == expected_boxed.strip() else 0.0
+            
+        elif verification_mode == "list_unordered":
+            if isinstance(actual, list) and isinstance(expected, list):
+                return 1.0 if set(str(x) for x in actual) == set(str(x) for x in expected) else 0.0
+            return 0.0
+            
+        elif verification_mode == "list_partial":
+            if isinstance(actual, list) and isinstance(expected, list):
+                actual_set = set(str(x) for x in actual)
+                expected_set = set(str(x) for x in expected)
+                if not expected_set:
+                    return 1.0
+                overlap = len(actual_set & expected_set)
+                return overlap / len(expected_set)
+            return 0.0
+            
+        elif verification_mode == "dict_exact":
+            if isinstance(actual, dict) and isinstance(expected, dict):
+                return 1.0 if actual == expected else 0.0
+            return 0.0
+            
+        elif verification_mode == "dict_partial":
+            if isinstance(actual, dict) and isinstance(expected, dict):
+                if not expected:
+                    return 1.0
+                matches = sum(1 for k, v in expected.items() if actual.get(k) == v)
+                return matches / len(expected)
+            return 0.0
+            
+        elif verification_mode == "numeric":
+            try:
+                actual_num = float(actual)
+                expected_num = float(expected)
+                return 1.0 if abs(actual_num - expected_num) < 1e-6 else 0.0
+            except (ValueError, TypeError):
+                return 0.0
+                
+        else:
+            # Fallback to original soft similarity for backwards compatibility
+            return self._compute_soft_answer_similarity_original(actual, expected)
+    
+    def _compute_soft_answer_similarity_original(self, actual: Any, expected: Any) -> float:
+        """
+        Original soft similarity computation for backwards compatibility.
         Handles different limits, partial overlaps, and flexible formats.
         """
         if actual is None:
@@ -479,6 +575,8 @@ class BioReasoningRewardManager:
             valid_response_length = data_dict['valid_response_length']
             reward_tensor[i, valid_response_length - 1] = reward
             
+
+            
             # Collect metrics
             for key, value in metrics.items():
                 all_scores[key].append(value)
@@ -496,6 +594,8 @@ class BioReasoningRewardManager:
         # Add summary metrics
         aggregate_scores['bio_reasoning/avg_reward'] = reward_tensor.sum(-1).mean().item()
         aggregate_scores['bio_reasoning/success_rate'] = len(correct_predictions) / len(data)
+        
+
         
         PrettyPrinter.section_header("Bio Reasoning Results Summary")
         PrettyPrinter.table(
