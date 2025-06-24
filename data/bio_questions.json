@@ -1,6 +1,5 @@
 [
   {
-<<<<<<< HEAD
     "question": "How many PATRIC CDS (Coding DNA Sequences) does Sphingobium sp. B1D3A have?",
     "answer": "\\boxed{4090}",
     "verification_mode": "exact",
@@ -696,6 +695,5 @@
     ],
     "curriculum_order": 12,
     "verification_mode": "dict_exact"
->>>>>>> 01382aff255c33067e3e0e313fe7bca227e124fc
   }
 ]
