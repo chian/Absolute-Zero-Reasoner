@@ -10,11 +10,14 @@ from absolute_zero_reasoner.data_construction.constructor import get_gen_bio_bvb
 
 
 def preprocess_bio_bvbrc_data(bio_data_path: str, local_dir: str):
-    """Convert bio_questions.json to the standard parquet format"""
+    """Convert bio_questions.json to the standard parquet format with curriculum support"""
     
     # Load the JSON data
     with open(bio_data_path, 'r') as f:
         bio_data = json.load(f)
+    
+    # Sort by curriculum_order for proper progression
+    bio_data = sorted(bio_data, key=lambda x: x.get('curriculum_order', 999))
     
     # Create training data following the GSM8K pattern
     train_data = []
@@ -37,7 +40,10 @@ def preprocess_bio_bvbrc_data(bio_data_path: str, local_dir: str):
                 'split': 'train' if idx < len(bio_data) * 0.8 else 'test',
                 'index': idx,
                 'question': item['question'],
-                'answer': json.dumps(item['answer']) if not isinstance(item['answer'], str) else item['answer']
+                'answer': json.dumps(item['answer']) if not isinstance(item['answer'], str) else item['answer'],
+                'curriculum_order': item.get('curriculum_order', 999),
+                'verification_mode': item.get('verification_mode', 'exact'),
+                'raw_answer': item['answer']  # Keep original format for verification
             }
         }
         
