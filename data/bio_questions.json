@@ -1,33 +1,9 @@
 [
   {
-    "question": "How many PATRIC CDS (Coding DNA Sequences) does Sphingobium sp. B1D3A have?",
-    "answer": "\\boxed{4090}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the genome ID for Sinomonas atrocyanea strain NBRC 12956?",
-    "answer": "\\boxed{37927.5}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the genome length (in base pairs) for Dactylosporangium fulvum NRRL B-16292?",
-    "answer": "\\boxed{10,494,953}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the GC content percentage for Nonomuraea rhizosphaerae strain CGMCC 4.7431?",
-    "answer": "\\boxed{70.738594%}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the genome length (in base pairs) for Corynebacterium caspium DSM 44850?",
-    "answer": "\\boxed{1,863,130}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
+    "question": "List all Pseudomonas aeruginosa genome IDs",
+    "answer": ["511145.12", "287.1", "208964.1", "235443.1", "208963.1"],
+    "curriculum_order": 1,
+    "verification_mode": "list_unordered"
   },
   {
     "question": "What is the genome ID for Microbacterium proteolyticum strain CECT 8356?",
@@ -552,51 +528,12 @@
     "curriculum_order": 1
   },
   {
-    "question": "What is the GC content percentage for Sphingomonas oligoaromativorans strain DSM 102246?",
-    "answer": "\\boxed{67.43417%}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the genome ID for Hymenobacter sp. CCM 8649?",
-    "answer": "\\boxed{1884790.3}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the GC content percentage for Chryseobacterium wanjuense strain DSM 17724?",
-    "answer": "\\boxed{35.982296%}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "How many PATRIC CDS (Coding DNA Sequences) does Halorubrum xinjiangense strain CGMCC 1.3527 have?",
-    "answer": "\\boxed{3471}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the genome length (in base pairs) for Paenibacillus sonchi IIRRBNF1?",
-    "answer": "\\boxed{7,323,556}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "How many PATRIC CDS (Coding DNA Sequences) does Virgibacillus sp. LM2416 strain LM2416 have?",
-    "answer": "\\boxed{4146}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "What is the GC content percentage for Azospirillum brasilense strain Sp 7?",
-    "answer": "\\boxed{68.34062%}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
-  },
-  {
-    "question": "How many PATRIC CDS (Coding DNA Sequences) does Samsonia erythrinae strain DSM 16730 have?",
-    "answer": "\\boxed{3783}",
-    "verification_mode": "exact",
-    "curriculum_order": 1
+    "question": "Get protein families for genome 511145.12",
+    "answer": [
+      {"family_id": "PLF_1240_00000001", "family_type": "PATRIC_genus", "protein_count": 45},
+      {"family_id": "PLF_1240_00000002", "family_type": "PATRIC_genus", "protein_count": 23}
+    ],
+    "curriculum_order": 12,
+    "verification_mode": "dict_exact"
   }
 ]
