@@ -6,11 +6,11 @@ data:
   train_files: data/bio/train.parquet
   val_files: data/bio/test.parquet
   prompt_key: prompt
-  max_prompt_length: 2048
-  max_response_length: 2048
-  max_validation_prompt_length: 2048
-  train_batch_size: 8  # Smaller batch for bio reasoning to avoid empty dataloader
-  val_batch_size: 8
+  max_prompt_length: 1024  # Reduced to prevent truncation
+  max_response_length: 1024  # Reduced to prevent truncation  
+  max_validation_prompt_length: 1024
+  train_batch_size: 16  # Increased for more stable training
+  val_batch_size: 16
   return_raw_input_ids: False
   return_raw_chat: True  # Enable chat format for bio reasoning
   shuffle: True
@@ -39,7 +39,7 @@ actor_rollout_ref:
     shuffle: False
     ulysses_sequence_parallel_size: 1
     optim:
-      lr: 1e-6
+      lr: 1e-5  # Increased from 1e-6 for actual learning
       lr_warmup_steps_ratio: 0.
       min_lr_ratio: null
       warmup_style: constant
@@ -152,7 +152,7 @@ algorithm:
     kl_coef: 0.001
 
 trainer:
-  debug: False
+  debug: True  # Enable to see actual outputs
   debug_port: 5678
   wandb_run_id: null
   total_epochs: 10  # Fewer epochs for bio reasoning
@@ -252,7 +252,7 @@ azr:
       # - except
   reward:
     n_samples: 8
-    num_examine: 0  # Number of batches to print for debugging (0=none, 1=some)
+    num_examine: 1  # Number of batches to print for debugging
     extract_code_block: False  # Bio reasoning doesn't use code blocks
     code_f_reward_type: binary # [accuracy, binary]
     generation_reward_config:
