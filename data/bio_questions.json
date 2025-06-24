@@ -1,9 +1,34 @@
 [
   {
-    "question": "List all Pseudomonas aeruginosa genome IDs",
-    "answer": ["511145.12", "287.1", "208964.1", "235443.1", "208963.1"],
-    "curriculum_order": 1,
-    "verification_mode": "list_unordered"
+<<<<<<< HEAD
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Sphingobium sp. B1D3A have?",
+    "answer": "\\boxed{4090}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Sinomonas atrocyanea strain NBRC 12956?",
+    "answer": "\\boxed{37927.5}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Dactylosporangium fulvum NRRL B-16292?",
+    "answer": "\\boxed{10,494,953}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Nonomuraea rhizosphaerae strain CGMCC 4.7431?",
+    "answer": "\\boxed{70.738594%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Corynebacterium caspium DSM 44850?",
+    "answer": "\\boxed{1,863,130}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
     "question": "What is the genome ID for Microbacterium proteolyticum strain CECT 8356?",
@@ -528,6 +553,142 @@
     "curriculum_order": 1
   },
   {
+    "question": "What is the GC content percentage for Sphingomonas oligoaromativorans strain DSM 102246?",
+    "answer": "\\boxed{67.43417%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Hymenobacter sp. CCM 8649?",
+    "answer": "\\boxed{1884790.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Chryseobacterium wanjuense strain DSM 17724?",
+    "answer": "\\boxed{35.982296%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Halorubrum xinjiangense strain CGMCC 1.3527 have?",
+    "answer": "\\boxed{3471}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Paenibacillus sonchi IIRRBNF1?",
+    "answer": "\\boxed{7,323,556}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Virgibacillus sp. LM2416 strain LM2416 have?",
+    "answer": "\\boxed{4146}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Azospirillum brasilense strain Sp 7?",
+    "answer": "\\boxed{68.34062%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Samsonia erythrinae strain DSM 16730 have?",
+    "answer": "\\boxed{3783}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+=======
+    "question": "List all Pseudomonas aeruginosa genome IDs",
+    "answer": ["511145.12", "287.1", "208964.1", "235443.1", "208963.1"],
+    "curriculum_order": 1,
+    "verification_mode": "list_unordered"
+  },
+  {
+    "question": "Find proteins in Escherichia coli genome 511145.12",
+    "answer": [
+      {"patric_id": "fig|511145.12.peg.1", "product": "thrA"},
+      {"patric_id": "fig|511145.12.peg.2", "product": "thrB"},
+      {"patric_id": "fig|511145.12.peg.3", "product": "thrC"}
+    ],
+    "curriculum_order": 2,
+    "verification_mode": "dict_exact"
+  },
+  {
+    "question": "Get taxonomy information for genome 224308.1",
+    "answer": {"genus": "Bacillus", "species": "subtilis", "strain": "168"},
+    "curriculum_order": 3,
+    "verification_mode": "dict_exact"
+  },
+  {
+    "question": "Search for genomes of Staphylococcus aureus strains",
+    "answer": ["93061.5", "282458.1", "282459.1", "426430.1", "196620.1"],
+    "curriculum_order": 4,
+    "verification_mode": "list_unordered"
+  },
+  {
+    "question": "Find features in genome 83333.1 that are proteins",
+    "answer": [
+      {"patric_id": "fig|83333.1.peg.1", "feature_type": "CDS", "product": "thr operon leader peptide"},
+      {"patric_id": "fig|83333.1.peg.2", "feature_type": "CDS", "product": "bifunctional aspartokinase I"}
+    ],
+    "curriculum_order": 5,
+    "verification_mode": "dict_exact"
+  },
+  {
+    "question": "List protein features for genome 511145.12",
+    "answer": [
+      {"patric_id": "fig|511145.12.peg.1", "start": 337, "end": 2799, "strand": "+"},
+      {"patric_id": "fig|511145.12.peg.2", "start": 2801, "end": 3733, "strand": "+"}
+    ],
+    "curriculum_order": 6,
+    "verification_mode": "dict_exact"
+  },
+  {
+    "question": "Get genome information for Mycobacterium tuberculosis H37Rv",
+    "answer": {
+      "genome_id": "83332.1",
+      "genome_name": "Mycobacterium tuberculosis H37Rv",
+      "organism_name": "Mycobacterium tuberculosis",
+      "genome_length": 4411532,
+      "gc_content": 65.6
+    },
+    "curriculum_order": 7,
+    "verification_mode": "dict_exact"
+  },
+  {
+    "question": "Find genomes in the Enterobacteriaceae family",
+    "answer": ["511145.12", "99287.1", "386585.6", "272561.1", "585054.4"],
+    "curriculum_order": 8,
+    "verification_mode": "list_unordered"
+  },
+  {
+    "question": "Search for antibiotic resistance genes in Staphylococcus aureus",
+    "answer": [
+      {"patric_id": "fig|93061.5.peg.123", "product": "beta-lactamase", "gene": "blaZ"},
+      {"patric_id": "fig|93061.5.peg.456", "product": "methicillin resistance protein", "gene": "mecA"}
+    ],
+    "curriculum_order": 9,
+    "verification_mode": "dict_exact"
+  },
+  {
+    "question": "List subsystems in genome 224308.1",
+    "answer": [
+      {"subsystem_name": "Glycolysis and Gluconeogenesis", "role_count": 12},
+      {"subsystem_name": "TCA Cycle", "role_count": 8},
+      {"subsystem_name": "Fatty Acid Biosynthesis", "role_count": 15}
+    ],
+    "curriculum_order": 10,
+    "verification_mode": "dict_exact"
+  },
+  {
+    "question": "Find all Escherichia coli genomes",
+    "answer": ["511145.12", "83333.1", "199310.1", "316407.1", "364106.9"],
+    "curriculum_order": 11,
+    "verification_mode": "list_unordered"
+  },
+  {
     "question": "Get protein families for genome 511145.12",
     "answer": [
       {"family_id": "PLF_1240_00000001", "family_type": "PATRIC_genus", "protein_count": 45},
@@ -535,5 +696,6 @@
     ],
     "curriculum_order": 12,
     "verification_mode": "dict_exact"
+>>>>>>> 01382aff255c33067e3e0e313fe7bca227e124fc
   }
 ]
