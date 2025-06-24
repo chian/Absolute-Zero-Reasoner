@@ -1,100 +1,602 @@
 [
   {
-    "question": "List all Pseudomonas aeruginosa genome IDs",
-    "answer": ["511145.12", "287.1", "208964.1", "235443.1", "208963.1"],
-    "curriculum_order": 1,
-    "verification_mode": "list_unordered"
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Sphingobium sp. B1D3A have?",
+    "answer": "\\boxed{4090}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Find proteins in Escherichia coli genome 511145.12",
-    "answer": [
-      {"patric_id": "fig|511145.12.peg.1", "product": "thrA"},
-      {"patric_id": "fig|511145.12.peg.2", "product": "thrB"},
-      {"patric_id": "fig|511145.12.peg.3", "product": "thrC"}
-    ],
-    "curriculum_order": 2,
-    "verification_mode": "dict_exact"
+    "question": "What is the genome ID for Sinomonas atrocyanea strain NBRC 12956?",
+    "answer": "\\boxed{37927.5}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Get taxonomy information for genome 224308.1",
-    "answer": {"genus": "Bacillus", "species": "subtilis", "strain": "168"},
-    "curriculum_order": 3,
-    "verification_mode": "dict_exact"
+    "question": "What is the genome length (in base pairs) for Dactylosporangium fulvum NRRL B-16292?",
+    "answer": "\\boxed{10,494,953}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Search for genomes of Staphylococcus aureus strains",
-    "answer": ["93061.5", "282458.1", "282459.1", "426430.1", "196620.1"],
-    "curriculum_order": 4,
-    "verification_mode": "list_unordered"
+    "question": "What is the GC content percentage for Nonomuraea rhizosphaerae strain CGMCC 4.7431?",
+    "answer": "\\boxed{70.738594%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Find features in genome 83333.1 that are proteins",
-    "answer": [
-      {"patric_id": "fig|83333.1.peg.1", "feature_type": "CDS", "product": "thr operon leader peptide"},
-      {"patric_id": "fig|83333.1.peg.2", "feature_type": "CDS", "product": "bifunctional aspartokinase I"}
-    ],
-    "curriculum_order": 5,
-    "verification_mode": "dict_exact"
+    "question": "What is the genome length (in base pairs) for Corynebacterium caspium DSM 44850?",
+    "answer": "\\boxed{1,863,130}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "List protein features for genome 511145.12",
-    "answer": [
-      {"patric_id": "fig|511145.12.peg.1", "start": 337, "end": 2799, "strand": "+"},
-      {"patric_id": "fig|511145.12.peg.2", "start": 2801, "end": 3733, "strand": "+"}
-    ],
-    "curriculum_order": 6,
-    "verification_mode": "dict_exact"
+    "question": "What is the genome ID for Microbacterium proteolyticum strain CECT 8356?",
+    "answer": "\\boxed{1572644.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Get genome information for Mycobacterium tuberculosis H37Rv",
-    "answer": {
-      "genome_id": "83332.1",
-      "genome_name": "Mycobacterium tuberculosis H37Rv",
-      "organism_name": "Mycobacterium tuberculosis",
-      "genome_length": 4411532,
-      "gc_content": 65.6
-    },
-    "curriculum_order": 7,
-    "verification_mode": "dict_exact"
+    "question": "What is the genome ID for Synechococcus elongatus PCC 6301?",
+    "answer": "\\boxed{269084.26}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Find genomes in the Enterobacteriaceae family",
-    "answer": ["511145.12", "99287.1", "386585.6", "272561.1", "585054.4"],
-    "curriculum_order": 8,
-    "verification_mode": "list_unordered"
+    "question": "What is the genome ID for Acetobacter indonesiensis strain NBRC 16471?",
+    "answer": "\\boxed{104101.10}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Search for antibiotic resistance genes in Staphylococcus aureus",
-    "answer": [
-      {"patric_id": "fig|93061.5.peg.123", "product": "beta-lactamase", "gene": "blaZ"},
-      {"patric_id": "fig|93061.5.peg.456", "product": "methicillin resistance protein", "gene": "mecA"}
-    ],
-    "curriculum_order": 9,
-    "verification_mode": "dict_exact"
+    "question": "What is the GC content percentage for Luteibacter sp. 335?",
+    "answer": "\\boxed{64.76081%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "List subsystems in genome 224308.1",
-    "answer": [
-      {"subsystem_name": "Glycolysis and Gluconeogenesis", "role_count": 12},
-      {"subsystem_name": "TCA Cycle", "role_count": 8},
-      {"subsystem_name": "Fatty Acid Biosynthesis", "role_count": 15}
-    ],
-    "curriculum_order": 10,
-    "verification_mode": "dict_exact"
+    "question": "What is the genome length (in base pairs) for Gilvimarinus polysaccharolyticus strain YN3?",
+    "answer": "\\boxed{3,746,057}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Find all Escherichia coli genomes",
-    "answer": ["511145.12", "83333.1", "199310.1", "316407.1", "364106.9"],
-    "curriculum_order": 11,
-    "verification_mode": "list_unordered"
+    "question": "What is the GC content percentage for Micromonospora sp. LB39?",
+    "answer": "\\boxed{70.58747%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   },
   {
-    "question": "Get protein families for genome 511145.12",
-    "answer": [
-      {"family_id": "PLF_1240_00000001", "family_type": "PATRIC_genus", "protein_count": 45},
-      {"family_id": "PLF_1240_00000002", "family_type": "PATRIC_genus", "protein_count": 23}
-    ],
-    "curriculum_order": 12,
-    "verification_mode": "dict_exact"
+    "question": "What is the genome ID for Saccharopolyspora pogona strain NRRL30141?",
+    "answer": "\\boxed{333966.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Polynucleobacter sp. AP-Basta-1000A-D1?",
+    "answer": "\\boxed{45.25331%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Sulfurospirillum arcachonense DSM 9755 have?",
+    "answer": "\\boxed{2646}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Rhodobacter sphaeroides strain org#2181 strain 28/5?",
+    "answer": "\\boxed{3,706,095}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Mogibacterium kristiansenii SUG1547?",
+    "answer": "\\boxed{1,802,987}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Bacillus sp. SKP7-4 have?",
+    "answer": "\\boxed{4671}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Clostridium pasteurianum DSM 525 = ATCC 6013?",
+    "answer": "\\boxed{1262449.10}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Paracoccus sp. BM15 have?",
+    "answer": "\\boxed{4058}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Ruminococcus bromii strain ATCC 27255 have?",
+    "answer": "\\boxed{2120}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Psychrobacter pacificensis strain DSM 23406 have?",
+    "answer": "\\boxed{2817}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Streptomyces sp. HNM0663 have?",
+    "answer": "\\boxed{7275}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Cryobacterium sp. MDB2-B have?",
+    "answer": "\\boxed{3921}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Nostoc sp. CENA67?",
+    "answer": "\\boxed{41.31929%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Deinococcus aquaticus PB-314?",
+    "answer": "\\boxed{68.81975%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Ruminococcus sp. SW178?",
+    "answer": "\\boxed{3,181,448}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Caldibacillus hisashii strain N61?",
+    "answer": "\\boxed{37.495026%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Bacillus sp. AGMB 02131?",
+    "answer": "\\boxed{39.458202%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Anabaena minutissima FACHB-250 have?",
+    "answer": "\\boxed{6818}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Rickettsia endosymbiont of Oedothorax gibbosus Oegibbosus-W744x776?",
+    "answer": "\\boxed{32.994583%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Helcococcus sp. Marseille-P4590?",
+    "answer": "\\boxed{2040290.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Lactobacillus sakei strain CBA3614?",
+    "answer": "\\boxed{1599.152}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Xanthomonas vesicatoria ATCC 35937 have?",
+    "answer": "\\boxed{5112}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Heliobacillus mobilis strain DSM 6151 have?",
+    "answer": "\\boxed{4179}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Pseudoxanthomonas sacheonensis strain DSM 19373?",
+    "answer": "\\boxed{4,036,284}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Parabacteroides sp. N37?",
+    "answer": "\\boxed{46.27117%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Halovivax sp. WLHSJ27 have?",
+    "answer": "\\boxed{4573}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Halorhabdus sp. H27?",
+    "answer": "\\boxed{2559573.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Denitrificimonas caeni DSM 24390 have?",
+    "answer": "\\boxed{2910}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Algoriphagus confluentis NBRC 111222?",
+    "answer": "\\boxed{1697556.4}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Leucobacter sp. CBX151?",
+    "answer": "\\boxed{4,141,170}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Dichotomicrobium thermohalophilum strain DSM 5002 have?",
+    "answer": "\\boxed{2855}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Stenotrophomonas koreensis strain DSM 17805?",
+    "answer": "\\boxed{266128.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Aureimonas ureilytica DSM 18598 = NBRC 106430?",
+    "answer": "\\boxed{5,097,296}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Flavivirga aquimarina KCTC 52353 have?",
+    "answer": "\\boxed{4413}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Micromonospora halotolerans DSM 45598?",
+    "answer": "\\boxed{6,955,679}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Sphingomonas phyllosphaerae FA2 have?",
+    "answer": "\\boxed{3581}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Desulfotignum phosphitoxidans DSM 13687 have?",
+    "answer": "\\boxed{4646}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Seohaeicola saemankumensis strain DP4N-5?",
+    "answer": "\\boxed{63.82467%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Mycobacterium virginiense DSM 100883?",
+    "answer": "\\boxed{4,980,168}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Shouchella rhizosphaerae CP20?",
+    "answer": "\\boxed{866786.8}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Comamonas sp. EJ4?",
+    "answer": "\\boxed{58.90194%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Streptomyces emeiensis strain CGMCC 4.3504?",
+    "answer": "\\boxed{7,125,330}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Enterococcus saigonensis strain VE80 have?",
+    "answer": "\\boxed{2775}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Bradyrhizobium lablabi strain CCBAU 23086 have?",
+    "answer": "\\boxed{9301}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Enterococcus rivorum strain LMG 25899 have?",
+    "answer": "\\boxed{3518}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Vibrio aerogenes LMG 19650?",
+    "answer": "\\boxed{92172.5}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Sphingomonas vulcanisoli strain CECT 8804?",
+    "answer": "\\boxed{3,267,440}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Wolbachia endosymbiont of Cardiocondyla obscurior strain wCobs-BR2009-alpha?",
+    "answer": "\\boxed{35.295086%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Vibrio spartinae CECT 9026 have?",
+    "answer": "\\boxed{4888}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Rubidibacter lacunae KORDI 51-2?",
+    "answer": "\\boxed{582515.4}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Thermoactinomyces vulgaris strain 2H have?",
+    "answer": "\\boxed{2972}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Streptomyces sp. TRM66268-LWL?",
+    "answer": "\\boxed{2767826.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Candidatus Paracaedibacteraceae bacterium 'Lake Konstanz'?",
+    "answer": "\\boxed{1,391,311}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Campylobacter sp. faydin G-140?",
+    "answer": "\\boxed{35.229774%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Algoriphagus sp. N3 have?",
+    "answer": "\\boxed{4413}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Hymenobacter norwichensis DSM 15439 have?",
+    "answer": "\\boxed{0}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Litoreibacter albidus strain DSM 26922?",
+    "answer": "\\boxed{670155.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Oceanivirga sp. ES3154-GLU?",
+    "answer": "\\boxed{1,356,983}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Propionibacterium acidipropionici strain CGMCC 1.2230?",
+    "answer": "\\boxed{3,651,382}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Sulfurimonas sp. NW10?",
+    "answer": "\\boxed{37.299057%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Haloterrigena salina JCM 13891?",
+    "answer": "\\boxed{1227488.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Campylobacter subantarcticus LMG 24377?",
+    "answer": "\\boxed{29.75%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Kangiella spongicola ATCC BAA-2076?",
+    "answer": "\\boxed{43.726574%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Falsochrobactrum sp. TDYN1?",
+    "answer": "\\boxed{3,511,269}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Carnobacterium sp. WN1359?",
+    "answer": "\\boxed{2,497,115}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Shewanella marina JCM 15074?",
+    "answer": "\\boxed{40.4%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Litoribacter alkaliphilus strain KCTC 32217?",
+    "answer": "\\boxed{1237105.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Turicella otitidis ATCC 51513 have?",
+    "answer": "\\boxed{1782}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Alcanivorax jadensis T9?",
+    "answer": "\\boxed{58.37%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Pseudomonas brassicacearum strain 3Re2-7?",
+    "answer": "\\boxed{930166.114}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Paraburkholderia sp. LMG 31836?",
+    "answer": "\\boxed{9,274,797}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Vibrio thalassae strain CECT8203 have?",
+    "answer": "\\boxed{4635}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Rhizobium viscosum strain DSM 7307 have?",
+    "answer": "\\boxed{6897}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Marixanthomonas ophiurae strain KMM 3046?",
+    "answer": "\\boxed{35.938156%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Gallibacterium salpingitidis strain F150?",
+    "answer": "\\boxed{37.34%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Histophilus somni strain USDA-ARS-USMARC-63368 have?",
+    "answer": "\\boxed{2041}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Streptomyces phyllanthi strain TISTR 2346?",
+    "answer": "\\boxed{70.66542%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Nocardiopsis tropica JCM 10877?",
+    "answer": "\\boxed{11,827,554}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Edaphobacter flagellatus strain HZ411?",
+    "answer": "\\boxed{4,445,627}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many RefSeq CDS (Coding DNA Sequences) does Pontibacter sp. M82 have?",
+    "answer": "\\boxed{3925}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Paenibacillus sp. DCY84?",
+    "answer": "\\boxed{1462996.4}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Sphingomonas oligoaromativorans strain DSM 102246?",
+    "answer": "\\boxed{67.43417%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome ID for Hymenobacter sp. CCM 8649?",
+    "answer": "\\boxed{1884790.3}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Chryseobacterium wanjuense strain DSM 17724?",
+    "answer": "\\boxed{35.982296%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Halorubrum xinjiangense strain CGMCC 1.3527 have?",
+    "answer": "\\boxed{3471}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the genome length (in base pairs) for Paenibacillus sonchi IIRRBNF1?",
+    "answer": "\\boxed{7,323,556}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Virgibacillus sp. LM2416 strain LM2416 have?",
+    "answer": "\\boxed{4146}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "What is the GC content percentage for Azospirillum brasilense strain Sp 7?",
+    "answer": "\\boxed{68.34062%}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
+  },
+  {
+    "question": "How many PATRIC CDS (Coding DNA Sequences) does Samsonia erythrinae strain DSM 16730 have?",
+    "answer": "\\boxed{3783}",
+    "verification_mode": "exact",
+    "curriculum_order": 1
   }
-] 
+]

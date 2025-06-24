@@ -42,7 +42,7 @@ def preprocess_bio_bvbrc_data(bio_data_path: str, local_dir: str):
                 'question': item['question'],
                 'answer': json.dumps(item['answer']) if not isinstance(item['answer'], str) else item['answer'],
                 'curriculum_order': item.get('curriculum_order', 999),
-                'verification_mode': item.get('verification_mode', 'exact'),
+                'verification_mode': item.get('verification_mode', 'auto'),
                 'raw_answer': item['answer']  # Keep original format for verification
             }
         }
