@@ -948,7 +948,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
           }
         ]
         """
-        if not os.path.exists(solutions_path):
+        if solutions_path is None or not os.path.exists(solutions_path):
             PrettyPrinter.status("INFO", f"No manual bio solutions found at {solutions_path}", "info")
             return []
         
