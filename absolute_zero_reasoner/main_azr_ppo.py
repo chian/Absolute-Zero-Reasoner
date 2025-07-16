@@ -26,6 +26,7 @@ from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role
 
 from absolute_zero_reasoner.trainer.ppo.azr_ray_trainer import CodeIORayPPOTrainer
 from absolute_zero_reasoner.rewards.reward_managers import CodeIORewardManager
+from absolute_zero_reasoner.rewards.bio_bvbrc_reward_manager import BioReasoningRewardManager
 
 
 @hydra.main(config_path='configs', config_name='azr_ppo_trainer', version_base=None)
@@ -123,40 +124,77 @@ def main_task(config, compute_score=None):
         role_worker_mapping[Role.RewardModel] = ray.remote(RewardModelWorker)
         mapping[Role.RewardModel] = global_pool_id
 
-    reward_fn = CodeIORewardManager(
-        tokenizer=tokenizer,
-        num_examine=0,
-        reward_fn_extraction_type=config.reward_fn.extraction_type,
-        math_metric=config.reward_fn.math_metric,
-        split='train',
-        splitter=config.reward_fn.splitter,
-        output_path=config.trainer.default_local_dir,
-        max_prompt_length=config.data.max_prompt_length,
-        generation_reward_config=config.azr.reward.generation_reward_config,
-        valid_program_filter=config.azr.data_selection_strategy.valid_program_filter,
-        debug=config.trainer.debug,
-        extract_code_block=config.azr.reward.extract_code_block,
-        code_f_reward_type=config.azr.reward.code_f_reward_type,
-        boxed_retry=config.reward_fn.boxed_retry,
-    )
+    # Use CodeIORewardManager for the following tasks (code, math, bio) - but not for bio_bvbrc
+    if config.azr.problem_types == 'bio_bvbrc':
+        reward_fn = BioReasoningRewardManager(
+            tokenizer=tokenizer,
+            num_examine=0,
+            reward_fn_extraction_type=config.reward_fn.extraction_type,
+            math_metric=config.reward_fn.math_metric,
+            split='train',
+            splitter=config.reward_fn.splitter,
+            output_path=config.trainer.default_local_dir,
+            max_prompt_length=config.data.max_prompt_length,
+            generation_reward_config=config.azr.reward.generation_reward_config,
+            valid_program_filter=config.azr.data_selection_strategy.valid_program_filter,
+            debug=config.trainer.debug,
+            extract_code_block=config.azr.reward.extract_code_block,
+            code_f_reward_type=config.azr.reward.code_f_reward_type,
+            boxed_retry=config.reward_fn.boxed_retry,
+        )
+    else:
+        reward_fn = CodeIORewardManager(
+            tokenizer=tokenizer,
+            num_examine=0,
+            reward_fn_extraction_type=config.reward_fn.extraction_type,
+            math_metric=config.reward_fn.math_metric,
+            split='train',
+            splitter=config.reward_fn.splitter,
+            output_path=config.trainer.default_local_dir,
+            max_prompt_length=config.data.max_prompt_length,
+            generation_reward_config=config.azr.reward.generation_reward_config,
+            valid_program_filter=config.azr.data_selection_strategy.valid_program_filter,
+            debug=config.trainer.debug,
+            extract_code_block=config.azr.reward.extract_code_block,
+            code_f_reward_type=config.azr.reward.code_f_reward_type,
+            boxed_retry=config.reward_fn.boxed_retry,
+        )
 
     # Note that we always use function-based RM for validation
-    val_reward_fn = CodeIORewardManager(
-        tokenizer=tokenizer,
-        num_examine=1,
-        reward_fn_extraction_type=config.reward_fn.extraction_type,
-        math_metric=config.reward_fn.math_metric,
-        split='test',
-        splitter=config.reward_fn.splitter,
-        output_path=config.trainer.default_local_dir,
-        max_prompt_length=config.data.max_prompt_length,
-        generation_reward_config=config.azr.reward.generation_reward_config,
-        valid_program_filter=config.azr.data_selection_strategy.valid_program_filter,
-        debug=config.trainer.debug,
-        extract_code_block=config.azr.reward.extract_code_block,
-        code_f_reward_type=config.azr.reward.code_f_reward_type,
-        boxed_retry=config.reward_fn.boxed_retry,
-    )
+    if config.azr.problem_types == 'bio_bvbrc':
+        val_reward_fn = BioReasoningRewardManager(
+            tokenizer=tokenizer,
+            num_examine=1,
+            reward_fn_extraction_type=config.reward_fn.extraction_type,
+            math_metric=config.reward_fn.math_metric,
+            split='test',
+            splitter=config.reward_fn.splitter,
+            output_path=config.trainer.default_local_dir,
+            max_prompt_length=config.data.max_prompt_length,
+            generation_reward_config=config.azr.reward.generation_reward_config,
+            valid_program_filter=config.azr.data_selection_strategy.valid_program_filter,
+            debug=config.trainer.debug,
+            extract_code_block=config.azr.reward.extract_code_block,
+            code_f_reward_type=config.azr.reward.code_f_reward_type,
+            boxed_retry=config.reward_fn.boxed_retry,
+        )
+    else:
+        val_reward_fn = CodeIORewardManager(
+            tokenizer=tokenizer,
+            num_examine=1,
+            reward_fn_extraction_type=config.reward_fn.extraction_type,
+            math_metric=config.reward_fn.math_metric,
+            split='test',
+            splitter=config.reward_fn.splitter,
+            output_path=config.trainer.default_local_dir,
+            max_prompt_length=config.data.max_prompt_length,
+            generation_reward_config=config.azr.reward.generation_reward_config,
+            valid_program_filter=config.azr.data_selection_strategy.valid_program_filter,
+            debug=config.trainer.debug,
+            extract_code_block=config.azr.reward.extract_code_block,
+            code_f_reward_type=config.azr.reward.code_f_reward_type,
+            boxed_retry=config.reward_fn.boxed_retry,
+        )
 
     resource_pool_manager = ResourcePoolManager(resource_pool_spec=resource_pool_spec, mapping=mapping)
 

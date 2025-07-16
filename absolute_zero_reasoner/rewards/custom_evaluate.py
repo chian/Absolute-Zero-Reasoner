@@ -15,26 +15,25 @@
 
 import re
 from collections import Counter
-from typing import Tuple, List, Dict
+from typing import Tuple, List, Dict, Optional
 
 from math_verify import parse, verify
 
 from absolute_zero_reasoner.rewards.math_utils import grade_answer_mathd, grade_answer_sympy
 
 
-def choice_answer_clean(pred: str):
+def choice_answer_clean(pred: str) -> str:
     """https://github.com/hkust-nlp/simpleRL-reason/blob/main/eval/grader.py"""
     pred = pred.strip("\n").rstrip(".").rstrip("/").strip(" ").lstrip(":")
     # Clean the answer based on the dataset
-    tmp = re.findall(r"\b(A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)\b", pred.upper())
+    tmp = re.findall(r"\b(1|2|3|4|5|6|7|8|9|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)\b", pred.upper())
     if tmp:
-        pred = tmp
+        # Returns a list of strings, so we take the last one
+        pred_str = tmp[-1]
     else:
-        pred = [pred.strip().strip(".")]
-    pred = pred[-1]
+        pred_str = pred.strip().strip(".")
     # Remove the period at the end, again!
-    pred = pred.rstrip(".").rstrip("/")
-    return pred
+    return pred_str.rstrip(".").rstrip("/")
 
 
 def extract_code(completion: str, language: str = "python") -> str:
@@ -158,40 +157,69 @@ def extract_code_content(solution_str):
 
 
 def get_reward(
-    solution_str: str,
-    ground_truth: str,
-    extra_info: dict,
-    extraction_type: str,
-    splitter: str,
+    # Arguments for code/math tasks
+    solution_str: Optional[str] = None,
+    ground_truth: Optional[str] = None,
+    extra_info: Optional[dict] = None,
+    extraction_type: Optional[str] = None,
+    splitter: Optional[str] = None,
+    # Arguments for multiple-choice tasks
+    extracted_ans: Optional[str] = None,
+    gold_ans: Optional[str] = None,
+    question: Optional[str] = None,
+    # Common arguments
     math_metric: str = 'deepscaler',
     boxed_retry: bool = False,
 ) -> Tuple[float, Dict[str, float]]:
-    solution_str = solution_str.split(splitter)[1].strip()
-    solution_str = solution_str.strip('\"\'') 
-    gt_reward = get_gt_reward(solution_str, ground_truth, extraction_type, extra_info['metric'], math_metric, boxed_retry=boxed_retry)
-    format_reward = get_format_reward(solution_str, extraction_type)
-    if extra_info['split'] == 'train':
-        if extraction_type.startswith('answer') or extraction_type.startswith('boxed'):
-            if extraction_type.endswith('conditional'):
-                # R(answer) =
-                # 1 if correct formatting and correct answer
-                # -0.5 if correct formatting and incorrect answer
-                # -1 if incorrect formatting
-                if not format_reward:
-                    return -1., {'gt': gt_reward, 'format': format_reward}
-                # correct formatting
+
+    # Determine the task type based on the provided arguments
+    if solution_str is not None:
+        # This is a code/math task
+        assert ground_truth is not None, "ground_truth must be provided for code/math tasks"
+        assert extra_info is not None, "extra_info must be provided for code/math tasks"
+        assert extraction_type is not None, "extraction_type must be provided for code/math tasks"
+        assert splitter is not None, "splitter must be provided for code/math tasks"
+        
+        solution_str = solution_str.split(splitter)[1].strip()
+        solution_str = solution_str.strip('\"\'') 
+        gt_reward = get_gt_reward(solution_str, ground_truth, extraction_type, extra_info['metric'], math_metric, boxed_retry=boxed_retry)
+        format_reward = get_format_reward(solution_str, extraction_type)
+        if extra_info['split'] == 'train':
+            if extraction_type.startswith('answer') or extraction_type.startswith('boxed'):
+                if extraction_type.endswith('conditional'):
+                    if not format_reward:
+                        return -1., {'gt': gt_reward, 'format': format_reward}
+                    else:
+                        return 1. if gt_reward else -0.5, {'gt': gt_reward, 'format': format_reward}
+                elif extraction_type.endswith('addition'):
+                    return (0.5 if format_reward else 0.) + gt_reward, {'gt': gt_reward, 'format': format_reward}
+                elif extraction_type.endswith('multiply'):
+                    return format_reward * gt_reward, {'gt': gt_reward, 'format': format_reward}
                 else:
-                    return 1. if gt_reward else -0.5, {'gt': gt_reward, 'format': format_reward}
-            elif extraction_type.endswith('addition'):
-                return (0.5 if format_reward else 0.) + gt_reward, {'gt': gt_reward, 'format': format_reward}
-            elif extraction_type.endswith('multiply'):
-                return format_reward * gt_reward, {'gt': gt_reward, 'format': format_reward}
-            else:
-                raise ValueError(f"Invalid extraction type: {extraction_type}")
-    elif extra_info['split'] == 'test':
+                    raise ValueError(f"Invalid extraction type: {extraction_type}")
+            return -1., {'gt': gt_reward, 'format': format_reward} # Should not happen in train
+        elif extra_info['split'] == 'test':
+            return gt_reward, {'gt': gt_reward, 'format': format_reward}
+        else:
+            raise ValueError(f"Invalid split: {extra_info['split']}")
+    
+    elif extracted_ans is not None:
+        # This is a multiple-choice task
+        assert gold_ans is not None, "gold_ans must be provided for multiple-choice tasks"
+
+        gt_reward = get_gt_reward(
+            solution_str=extracted_ans, 
+            ground_truth=gold_ans, 
+            extraction_type='none',
+            metric='mc',
+            math_metric=math_metric, 
+            boxed_retry=boxed_retry
+        )
+        format_reward = 1.0 if extracted_ans else 0.0
         return gt_reward, {'gt': gt_reward, 'format': format_reward}
+
     else:
-        raise ValueError(f"Invalid split: {extra_info['split']}")
+        raise ValueError("Either solution_str or extracted_ans must be provided to get_reward")
 
 
 # string normalization from https://github.com/EleutherAI/lm-evaluation-harness/blob/master/lm_eval/tasks/hendrycks_math.py
@@ -220,13 +248,13 @@ def remove_boxed(s: str) -> str:
 
     left = "\\boxed{"
 
-    assert s[:len(left)] == left
-    assert s[-1] == "}"
+    if not (s.startswith(left) and s.endswith("}")):
+        return s # Return original string if not boxed
 
     return s[len(left):-1]
 
 
-def last_boxed_only_string(string: str) -> str:
+def last_boxed_only_string(string: str) -> Optional[str]:
     idx = string.rfind("\\boxed")
     if "\\boxed " in string:
         return "\\boxed " + string.split("\\boxed ")[-1].split("$")[0]

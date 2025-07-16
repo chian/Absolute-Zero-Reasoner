@@ -2,4 +2,4 @@
 python -m absolute_zero_reasoner.data_construction.bio_bvbrc_preprocess
 
 #run ppo on bio
-po --config-path configs --config-name bio_bvbrc_ppo_trainer
+source .env && conda activate verl &&PYTHONPATH=. nohup python absolute_zero_reasoner/main_azr_ppo.py --config-name=bio_bvbrc_ppo_trainer trainer.experiment_name=bvbrc trainer.resume_from_path=False azr.manual_bio_solutions_path=null > training_output.log 2>&1 &

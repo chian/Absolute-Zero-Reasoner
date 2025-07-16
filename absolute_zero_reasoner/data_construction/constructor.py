@@ -229,32 +229,31 @@ def get_pred_code_io_data(
 def get_gen_bio_bvbrc_prompt(user_query: str) -> dict:
     """
     Generate a prompt for biological reasoning with <think> and <action> tags.
-    The LLM/agent is expected to fill in the reasoning and actions.
+    Uses o3 superprompt enhancement. Requires OPENAI_API_KEY environment variable.
     """
-    example = '''
-User Query: List all Pseudomonas aeruginosa genome IDs.
-<think>
-First, identify the relevant collection and fields. Use the genome collection and filter by genus and species.
-</think>
-<action>
-[
-    "curl -s \"https://www.bv-brc.org/api-bulk/genome/?and(eq(genus,Pseudomonas),eq(species,aeruginosa))&select(genome_id)\""
-]
-</action>
-'''
-    prompt = f"""You are a biological reasoning assistant. Given the following user query, think step by step and then output a list of shell commands (e.g., curl commands) needed to solve the problem. Wrap your reasoning in <think> tags and your commands in <action> tags. Use a Python list of strings for the commands inside <action>.
-
-Example:
-{example}
-
-Now, answer the following:
-User Query: {user_query}
-<think>
-"""
+    from absolute_zero_reasoner.utils.superprompt_processor import generate_enhanced_bio_prompt
+    prompt = generate_enhanced_bio_prompt(user_query, use_superprompt=True)
+    
     return {
         "data_source": "gen_bio_bvbrc",
         "prompt": [{"role": "user", "content": prompt}],
         "problem": user_query,
         "ability": "bio_bvbrc"
+    }
+
+
+def get_gen_bio_llm_prompt(user_query: str) -> dict:
+    """
+    Generate a prompt for biological reasoning (LLM-only).
+    """
+    from absolute_zero_reasoner.utils.superprompt_processor import generate_enhanced_bio_prompt
+    prompt = generate_enhanced_bio_prompt(user_query, use_superprompt=True)
+    
+    return {
+        "data_source": "gen_bio_llm",
+        "prompt": [{"role": "user", "content": prompt}],
+        "problem": user_query,
+        "ability": "bio_llm",
+        "problem_type": "gen_bio_llm",
     }
 

@@ -14,6 +14,7 @@ from verl import DataProto
 from verl.protocol import DataProtoItem
 from verl.utils.dataset.rl_dataset import collate_fn
 from verl.protocol import pad_dataproto_to_divisor, unpad_dataproto
+from torch.utils.data import DataLoader, RandomSampler
 
 import absolute_zero_reasoner.rewards.custom_evaluate as custom_evaluate
 from absolute_zero_reasoner.rewards.code_reward import (
@@ -25,7 +26,6 @@ from absolute_zero_reasoner.rewards.code_reward import (
     get_halstead_reward,
     get_type_counts_reward,
 )
-from absolute_zero_reasoner.rewards.custom_evaluate import get_format_reward, extract_answer, extract_thought
 from absolute_zero_reasoner.data_construction.process_data import boxed_instruction, instruction_following
 from absolute_zero_reasoner.data_construction.constructor import get_code_problem_predictor_prompt
 from absolute_zero_reasoner.utils.dataset.rl_dataset import RLHFDataset
@@ -71,6 +71,8 @@ class CodeIORewardManager():
         self.num_inputs = num_inputs
         self.code_f_reward_type = code_f_reward_type
         self.boxed_retry = boxed_retry
+        self.val_df = pd.DataFrame()
+        self.train_df = pd.DataFrame()
 
     @staticmethod
     def extract_input_output(extracted_content: str, return_input: bool = True, return_output: bool = False) -> Tuple[str, str]:
@@ -150,8 +152,8 @@ class CodeIORewardManager():
         else:
             # If splitter is empty, use the entire text
             generation = non_special_tokens_sequences_str.strip().strip('\"\'')
-        extracted_content = extract_answer(generation, self.reward_fn_extraction_type, boxed_retry=self.boxed_retry)
-        thought = extract_thought(generation)
+        extracted_content = custom_evaluate.extract_answer(generation, self.reward_fn_extraction_type, boxed_retry=self.boxed_retry)
+        thought = custom_evaluate.extract_thought(generation)
 
         data_dict = {
             'generation': generation,
@@ -177,6 +179,7 @@ class CodeIORewardManager():
             data_dict['input'] = data_item.non_tensor_batch['extra_info']['input']
             data_dict['output'] = data_item.non_tensor_batch['extra_info']['output']
             data_dict['imports'] = data_item.non_tensor_batch['extra_info'].get('imports', [])
+
         elif problem_type.startswith('pred') and 'code_f' in problem_type:
             data_dict['program'] = data_item.non_tensor_batch['problem']
             data_dict['given_inputs'] = data_item.non_tensor_batch['extra_info']['given_inputs']
@@ -187,8 +190,8 @@ class CodeIORewardManager():
             data_dict['imports'] = data_item.non_tensor_batch['extra_info'].get('imports', [])
 
         # if QA task, we only need to check the format
-        if problem_type is None:
-            format_score = get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
+        if problem_type == 'mc':
+            format_score = custom_evaluate.get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
             data_dict['format_score'] = format_score
             return data_dict
         # first go through, we only checking the format
@@ -250,7 +253,7 @@ class CodeIORewardManager():
                     'thought': thought,
                     'composite_functions': data_dict['composite_functions']
                 }
-                format_score = get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
+                format_score = custom_evaluate.get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
                 data_dict['format_score'] = format_score
                 data_dict['code_validity'] = True
                 return data_dict
@@ -289,7 +292,7 @@ class CodeIORewardManager():
                     'imports': data_dict['imports'][0],
                     'thought': thought,
                 }
-                format_score = get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
+                format_score = custom_evaluate.get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
                 data_dict['format_score'] = format_score
                 data_dict['code_validity'] = True
                 return data_dict
@@ -307,7 +310,7 @@ class CodeIORewardManager():
                 if input_snippet is None:
                     data_dict['format_score'] = 0.
                     return data_dict
-                format_score = get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
+                format_score = custom_evaluate.get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
                 data_dict['format_score'] = format_score
                 data_dict['answer'] = input_snippet
                 return data_dict
@@ -317,7 +320,7 @@ class CodeIORewardManager():
                 if output_snippet is None:
                     data_dict['format_score'] = 0.
                     return data_dict
-                format_score = get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
+                format_score = custom_evaluate.get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
                 data_dict['format_score'] = format_score
                 data_dict['answer'] = output_snippet
                 return data_dict
@@ -326,7 +329,7 @@ class CodeIORewardManager():
                 if not success:
                     data_dict['format_score'] = 0.
                     return data_dict
-                format_score = get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
+                format_score = custom_evaluate.get_format_reward(solution_str=generation, extraction_type=self.reward_fn_extraction_type) if self.generation_reward_config.format_reward else 1.
                 data_dict['format_score'] = format_score
                 data_dict['answer'] = {
                     'snippet': code_snippet,
@@ -342,13 +345,14 @@ class CodeIORewardManager():
                 return data_dict
             else:
                 raise ValueError(f"Invalid problem type: {problem_type}")
+
         else:
             raise ValueError(f"Invalid problem type: {problem_type}")
 
     def __call__(
         self,
         data: DataProto,
-        problem_type: str = None,
+        problem_type: str,
         executor = None,
         rollout_actor_wg = None,
         banned_words: List[str] = [],
@@ -371,11 +375,8 @@ class CodeIORewardManager():
         valid_programs = [] # for gen tasks, we need to store the valid programs for later use, ignore this if prediction task
         correct_predictions = []
         uids = np.array([str(uuid.uuid4()) for _ in range(len(data))], dtype=object)
-        if problem_type is None:
-            problem_types = [d.non_tensor_batch['extra_info']['metric'] for d in data]
-            problem_type = 'pred' # dummy set
-        else:
-            problem_types = [problem_type] * len(data)
+        # problem_type is now required - no more fallback to metric field
+        problem_types = [problem_type] * len(data)
         PrettyPrinter.section_header("Getting Data Dicts")
         for i in range(len(data)): # get format score
             data_dict = self._get_data_dict(data[i], problem_types[i], executor, banned_words, uids[i], banned_assertion_keywords)
@@ -460,13 +461,15 @@ class CodeIORewardManager():
             acc_rewards = []
             for i, data_dict in enumerate(data_dicts):
                 valid_response_length = data_dict['valid_response_length']
-                imports = data_dict['imports']
+                # Handle different task types
                 if not problem_type.endswith('code_f'):
+                    imports = data_dict['imports']
                     answer = data_dict['answer']
                     gold_input = data_dict['input']
                     gold_output = data_dict['output']
                     program = data_dict['program']
                 else:
+                    imports = data_dict['imports']
                     hidden_inputs = data_dict['hidden_inputs']
                     hidden_outputs = data_dict['hidden_outputs']
                 if not data_dicts[i]['format_score']: # early stop if the format is not correct
@@ -516,6 +519,7 @@ class CodeIORewardManager():
                     # note that if code_f_reward_type==accuracy, it is already handled in the above
                     if acc_reward > 0:
                         correct_predictions.append(data_dict)
+
                 else:
                     raise ValueError(f"Invalid problem type: {problem_types[i]}")
 
@@ -536,6 +540,54 @@ class CodeIORewardManager():
             all_scores['accuracy'] = acc_rewards
             all_scores['format_score'] = [data_dicts[i]['format_score'] for i in range(len(data))]
             all_scores['none_ratio'] = all_scores['none_count'] / len(data)
+        else:
+            # This branch handles QA-style tasks like math and other multiple-choice questions
+            PrettyPrinter.section_header("Getting QA Rewards")
+            all_scores['none_count'] = 0
+            acc_rewards = []
+            format_scores = []
+            for i, data_dict in enumerate(data_dicts):
+                valid_response_length = data_dict['valid_response_length']
+                format_score = data_dict['format_score']
+                format_scores.append(format_score)
+
+                if format_score > 0:
+                    if problem_type == 'mc':
+                        score, _ = custom_evaluate.get_reward(
+                            extracted_ans=data_dict['extracted_content'],
+                            gold_ans=data_dict['ground_truth'],
+                            question=data_dict['extra_info'].get('question', ''),
+                            boxed_retry=self.boxed_retry
+                        )
+                    else:
+                        score, _ = self.compute_score(
+                            solution_str=data_dict['non_special_tokens_sequences_str'],
+                            ground_truth=data_dict['ground_truth'],
+                            extra_info=data_dict['extra_info'],
+                            extraction_type=self.reward_fn_extraction_type,
+                            splitter=self.splitter
+                        )
+                    acc_reward = float(score)
+                else:
+                    acc_reward = 0.0
+                
+                acc_rewards.append(acc_reward)
+                
+                if self.split == 'train':
+                    if format_score > 0:
+                        if acc_reward > 0:
+                            reward_tensor[i, valid_response_length - 1] = acc_reward
+                        else:
+                            reward_tensor[i, valid_response_length - 1] = -0.5
+                    else:
+                        reward_tensor[i, valid_response_length - 1] = -1.0
+                elif self.split == 'test': # only acc reward for eval
+                    reward_tensor[i, valid_response_length - 1] = acc_reward
+
+            all_scores['accuracy'] = acc_rewards
+            all_scores['format_score'] = format_scores
+            all_scores['none_ratio'] = all_scores['none_count'] / len(data)
+
         return reward_tensor, all_scores, valid_programs, correct_predictions
 
     def _get_problem_generator_rewards_and_valid_programs(
@@ -696,7 +748,7 @@ class CodeIORewardManager():
             batched_responses = []
             for b in batch:
                 batch_dict = {
-                        'extracted_answers': extract_answer(
+                        'extracted_answers': custom_evaluate.extract_answer(
                             self.tokenizer.decode(b.batch['responses'], skip_special_tokens=True),
                             self.reward_fn_extraction_type,
                             boxed_retry=self.boxed_retry,
@@ -883,4 +935,8 @@ class CodeIORewardManager():
 
         # turn into normal dict
         rewards = dict(rewards)
+        self.val_df = pd.DataFrame(valid_programs)
+        self.train_df = pd.DataFrame(data_dicts)
+        self.val_df.to_csv(os.path.join(self.output_path, 'val.csv'), index=False)
+        self.train_df.to_csv(os.path.join(self.output_path, 'train.csv'), index=False)
         return rewards, valid_programs

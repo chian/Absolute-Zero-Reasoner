@@ -1,0 +1,114 @@
+Given the user's biological query "{{user prompt: {user_query} }}" enhance it for BV-BRC database reasoning.
+
+The enhanced prompt MUST include explicit format instructions that tell the model:
+
+A conversation between User and Assistant. The user asks a question, and the Assistant solves it.
+The assistant first thinks about the reasoning process in the mind and then provides the user
+with the answer, sometimes using actions to find the answer. The reasoning process, actions, and answer are enclosed within <think></think>, <action> </action> and
+<answer> </answer> tags, respectively, i.e., <think> reasoning process here </think> <action> [ {{"action": "bash", "action_input": "specific command to launch here", "action_output": "put observation here"}}, {{ add more actions as needed}} ]
+</action> Please reason step by step, and put your final answer within \\boxed{{}}.
+
+CRITICAL FORMAT REQUIREMENTS FOR THE ENHANCED PROMPT:
+- MUST start with explicit format instructions (see above)
+- EVERY command must be in <action> tags
+- EVERY command must use ONLY these fields:
+  - "action": "bash"
+  - "action_input": [command here]
+- Multiple commands must be in an array
+- NO other fields or formats are allowed
+- NO explanatory fields in the JSON
+- NO additional JSON structure
+- USE FEW-SHOT PROMPTING TECHNIQUES
+- DO NOT SKIP STEPS
+- DO NOT USE HARDCODED VALUES
+- ALWAYS CHECK API DOCUMENTATION FIRST
+- USE ONLY CURL REQUESTS TO THE BV-BRC ENDPOINT
+
+EXAMPLES OF CORRECT FORMAT:
+
+Input: "How many PATRIC CDS does Sphingobium sp. B1D3A have?"
+Output:
+<think>
+I need to find the CDS count for a specific strain. Based on the API documentation, CDS count is stored in the patric_cds field. I should target the genome collection and use proper organism identification.
+</think>
+
+<action>
+[
+{{
+    "action": "bash",
+    "action_input": "curl -s \"https://www.bv-brc.org/api-bulk/genome/?and(contains(organism_name,Sphingobium),contains(genome_name,B1D3A))&select(patric_cds,organism_name,genome_name)&limit(3)\""
+}}
+]
+</action>
+
+Input: "What is the genome length for Dactylosporangium fulvum NRRL B-16292?"
+Output:
+<think>
+I need to find the genome length for a specific strain. Based on the API documentation, genome length is stored in the genome_length field. I'll construct a query that targets this specific organism and strain.
+</think>
+
+<action>
+[
+{{
+    "action": "bash", 
+    "action_input": "curl -s \"https://www.bv-brc.org/api-bulk/genome/?and(contains(organism_name,Dactylosporangium fulvum),contains(genome_name,NRRL B-16292))&select(genome_length,organism_name,genome_name)&limit(3)\""
+}}
+]
+</action>
+
+INSTRUCTIONS FOR ENHANCED PROMPT:
+
+1. START THE ENHANCED PROMPT with the explicit format instructions (see above) that tell the model exactly how to structure its response
+2. Include clear, precise instructions for biological database querying using BV-BRC API
+3. Use appropriate organism identification strategies (organism_name, genome_name, strain fields)
+4. Include specific details about desired biological data (CDS count, genome length, GC content, etc.)
+5. When generating your chain-of-thought (<think>), be brief but include reasoning about:
+   - Which API collection to use (genome, genome_feature, taxonomy, etc.)
+   - Which fields are needed for the query
+   - How to properly identify the target organism/strain
+6. Then produce the final commands in <action> tags
+7. Use appropriate leading words for biological database queries
+8. Avoid vague language - be specific about biological entities and measurements
+9. Rather than only stating what not to do, provide guidance on proper biological query construction
+10. Explicitly include instructions to use the <think></think> <action></action> <answer></answer> format
+11. Always limit results with limit() parameter to avoid large responses
+12. Use select() to specify only needed fields
+13. ENSURE the enhanced prompt will make the model follow the exact format with <think>, <action>, and <answer> tags
+
+BIOLOGICAL CONTEXT:
+The BV-BRC (Bacterial and Viral Bioinformatics Resource Center) database contains:
+- Genome data: organism information, genome statistics, assembly details
+- Feature data: genes, proteins, CDS annotations
+- Taxonomy data: organism classification and lineage
+- Strain data: specific strain information and metadata
+
+KEY API COLLECTIONS FOR BIOLOGICAL QUERIES:
+- genome: Primary collection for organism and genome-level data
+- genome_feature: Gene and protein feature annotations  
+- taxonomy: Taxonomic classification and lineage information
+- strain: Strain-specific metadata and characteristics
+
+IMPORTANT BIOLOGICAL FIELD MAPPINGS (from API documentation):
+- CDS count: patric_cds field
+- Genome length: genome_length field  
+- GC content: gc_content field
+- Organism identification: organism_name field
+- Strain identification: strain field or genome_name field
+- Genome ID: genome_id field
+
+API QUERY PATTERNS:
+- Base URL: https://www.bv-brc.org/api-bulk/[collection]/
+- Filtering: ?and(eq(field,value),contains(field,value))
+- Field selection: &select(field1,field2,field3)
+- Result limiting: &limit(N)
+- Text search: contains(field,search_term) for partial matches
+- Exact match: eq(field,value) for exact values
+
+QUERY CONSTRUCTION STRATEGY:
+1. Identify target organism using organism_name and/or strain/genome_name
+2. Select appropriate fields for the biological question
+3. Use contains() for organism names with spaces or strain identifiers
+4. Always include limit() to prevent large responses
+5. Test with broader queries first, then narrow down if needed
+
+Remember: The goal is to construct precise, efficient biological database queries that retrieve the specific biological information requested by the user while following proper API usage patterns. 

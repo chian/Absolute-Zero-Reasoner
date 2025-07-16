@@ -1,171 +1,480 @@
+nohup: ignoring input
 /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
   warnings.warn(
-2025-06-24 11:24:02,123	INFO worker.py:1821 -- Started a local Ray instance.
-[36m(pid=3851694)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
-[36m(pid=3851694)[0m   warnings.warn(
-[36m(main_task pid=3851694)[0m {'actor_rollout_ref': 
-[36m(main_task pid=3851694)[0m {'actor': {'clip_ratio': 0.2,
-[36m(main_task pid=3851694)[0m                                  'entropy_coeff': 0.001,
-[36m(main_task pid=3851694)[0m                                  'fsdp_config': {'fsdp_size': -1,
-[36m(main_task pid=3851694)[0m                                                  'grad_offload': False,
-[36m(main_task pid=3851694)[0m                                                  'optimizer_offload': False,
-[36m(main_task pid=3851694)[0m                                                  'param_offload': False,
-[36m(main_task pid=3851694)[0m                                                  'wrap_policy': {'min_num_params': 0}},
-[36m(main_task pid=3851694)[0m                                  'grad_clip': 1.0,
-[36m(main_task pid=3851694)[0m                                  'optim': {'lr': 1e-05,
-[36m(main_task pid=3851694)[0m                                            'lr_warmup_steps_ratio': 0.0,
-[36m(main_task pid=3851694)[0m                                            'min_lr_ratio': None,
-[36m(main_task pid=3851694)[0m                                            'total_training_steps': -1,
-[36m(main_task pid=3851694)[0m                                            'warmup_style': 'constant'},
-[36m(main_task pid=3851694)[0m                                  'ppo_epochs': 1,
-[36m(main_task pid=3851694)[0m                                  'ppo_max_token_len_per_gpu': 16384,
-[36m(main_task pid=3851694)[0m                                  'ppo_micro_batch_size': None,
-[36m(main_task pid=3851694)[0m                                  'ppo_micro_batch_size_per_gpu': 4,
-[36m(main_task pid=3851694)[0m                                  'ppo_mini_batch_size': 16,
-[36m(main_task pid=3851694)[0m                                  'shuffle': False,
-[36m(main_task pid=3851694)[0m                                  'strategy': 'fsdp',
-[36m(main_task pid=3851694)[0m                                  'ulysses_sequence_parallel_size': 1,
-[36m(main_task pid=3851694)[0m                                  'use_dynamic_bsz': False,
-[36m(main_task pid=3851694)[0m                                  'use_kl_loss': False},
-[36m(main_task pid=3851694)[0m                        'hybrid_engine': True,
-[36m(main_task pid=3851694)[0m                        'model': {'enable_gradient_checkpointing': True,
-[36m(main_task pid=3851694)[0m                                  'external_lib': None,
-[36m(main_task pid=3851694)[0m                                  'override_config': {},
-[36m(main_task pid=3851694)[0m                                  'path': 'google/gemma-2-2b-it',
-[36m(main_task pid=3851694)[0m                                  'pretrained_tokenizer': True,
-[36m(main_task pid=3851694)[0m                                  'use_remove_padding': False},
-[36m(main_task pid=3851694)[0m                        'ref': {'fsdp_config': {'param_offload': False,
-[36m(main_task pid=3851694)[0m                                                'wrap_policy': {'min_num_params': 0}},
-[36m(main_task pid=3851694)[0m                                'include_ref': True,
-[36m(main_task pid=3851694)[0m                                'log_prob_max_token_len_per_gpu': 16384,
-[36m(main_task pid=3851694)[0m                                'log_prob_micro_batch_size': None,
-[36m(main_task pid=3851694)[0m                                'log_prob_micro_batch_size_per_gpu': 8,
-[36m(main_task pid=3851694)[0m                                'log_prob_use_dynamic_bsz': False,
-[36m(main_task pid=3851694)[0m                                'ulysses_sequence_parallel_size': 1},
-[36m(main_task pid=3851694)[0m                        'rollout': {'disable_log_stats': True,
-[36m(main_task pid=3851694)[0m                                    'do_sample': True,
-[36m(main_task pid=3851694)[0m                                    'dtype': 'bfloat16',
-[36m(main_task pid=3851694)[0m                                    'enable_chunked_prefill': True,
-[36m(main_task pid=3851694)[0m                                    'enforce_eager': True,
-[36m(main_task pid=3851694)[0m                                    'free_cache_engine': True,
-[36m(main_task pid=3851694)[0m                                    'gpu_memory_utilization': 0.5,
-[36m(main_task pid=3851694)[0m                                    'ignore_eos': False,
-[36m(main_task pid=3851694)[0m                                    'load_format': 'dummy_dtensor',
-[36m(main_task pid=3851694)[0m                                    'log_prob_max_token_len_per_gpu': 16384,
-[36m(main_task pid=3851694)[0m                                    'log_prob_micro_batch_size': None,
-[36m(main_task pid=3851694)[0m                                    'log_prob_micro_batch_size_per_gpu': 8,
-[36m(main_task pid=3851694)[0m                                    'log_prob_use_dynamic_bsz': False,
-[36m(main_task pid=3851694)[0m                                    'max_num_batched_tokens': 8192,
-[36m(main_task pid=3851694)[0m                                    'max_num_seqs': 1024,
-[36m(main_task pid=3851694)[0m                                    'n': 1,
-[36m(main_task pid=3851694)[0m                                    'name': 'vllm',
-[36m(main_task pid=3851694)[0m                                    'prompt_length': 1024,
-[36m(main_task pid=3851694)[0m                                    'response_length': 1024,
-[36m(main_task pid=3851694)[0m                                    'temperature': 1.0,
-[36m(main_task pid=3851694)[0m                                    'tensor_model_parallel_size': 2,
-[36m(main_task pid=3851694)[0m                                    'top_k': -1,
-[36m(main_task pid=3851694)[0m                                    'top_p': 1}},
-[36m(main_task pid=3851694)[0m  'algorithm': {'adv_estimator': 'reinforce_plus_plus',
-[36m(main_task pid=3851694)[0m                'gamma': 1.0,
-[36m(main_task pid=3851694)[0m                'kl_ctrl': {'kl_coef': 0.001, 'type': 'fixed'},
-[36m(main_task pid=3851694)[0m                'kl_penalty': 'kl',
-[36m(main_task pid=3851694)[0m                'lam': 1.0},
-[36m(main_task pid=3851694)[0m  'azr': {'ast_check': True,
-[36m(main_task pid=3851694)[0m          'code_f_seed_dataset': None,
-[36m(main_task pid=3851694)[0m          'data_selection_strategy': {'banned_keywords_for_errors_and_exceptions': None,
-[36m(main_task pid=3851694)[0m                                      'banned_words': ['logging',
-[36m(main_task pid=3851694)[0m                                                       'random',
-[36m(main_task pid=3851694)[0m                                                       'multiprocessing',
-[36m(main_task pid=3851694)[0m                                                       'pebble',
-[36m(main_task pid=3851694)[0m                                                       'subprocess',
-[36m(main_task pid=3851694)[0m                                                       'threading',
-[36m(main_task pid=3851694)[0m                                                       'datetime',
-[36m(main_task pid=3851694)[0m                                                       'time',
-[36m(main_task pid=3851694)[0m                                                       'hashlib',
-[36m(main_task pid=3851694)[0m                                                       'hmac',
-[36m(main_task pid=3851694)[0m                                                       'bcrypt',
-[36m(main_task pid=3851694)[0m                                                       'os.sys',
-[36m(main_task pid=3851694)[0m                                                       'os.path',
-[36m(main_task pid=3851694)[0m                                                       'sys.exit',
-[36m(main_task pid=3851694)[0m                                                       'os.environ',
-[36m(main_task pid=3851694)[0m                                                       'calendar',
-[36m(main_task pid=3851694)[0m                                                       'datetime'],
-[36m(main_task pid=3851694)[0m                                      'batched_estimate': False,
-[36m(main_task pid=3851694)[0m                                      'composite_chance': 0.5,
-[36m(main_task pid=3851694)[0m                                      'composite_chance_initial': 0.5,
-[36m(main_task pid=3851694)[0m                                      'composite_function_n_max': -1,
-[36m(main_task pid=3851694)[0m                                      'composite_function_n_min': -1,
-[36m(main_task pid=3851694)[0m                                      'composite_scheduler': {'enabled': False,
-[36m(main_task pid=3851694)[0m                                                              'num_programs_max': 3,
-[36m(main_task pid=3851694)[0m                                                              'update_num_programs_interval': 50,
-[36m(main_task pid=3851694)[0m                                                              'update_num_programs_start': 101,
-[36m(main_task pid=3851694)[0m                                                              'update_probability_increment': 0.01,
-[36m(main_task pid=3851694)[0m                                                              'update_probability_interval': 50,
-[36m(main_task pid=3851694)[0m                                                              'update_probability_max': 0.8,
-[36m(main_task pid=3851694)[0m                                                              'update_probability_start': 101},
-[36m(main_task pid=3851694)[0m                                      'composite_start_step': -1,
-[36m(main_task pid=3851694)[0m                                      'content_max_length': 2048,
-[36m(main_task pid=3851694)[0m                                      'data_len': 8,
-[36m(main_task pid=3851694)[0m                                      'io_n': 6,
-[36m(main_task pid=3851694)[0m                                      'max_programs': None,
-[36m(main_task pid=3851694)[0m                                      'max_programs_initial': -1,
-[36m(main_task pid=3851694)[0m                                      'num_inputs': 10,
-[36m(main_task pid=3851694)[0m                                      'seed_batch_factor': 4,
-[36m(main_task pid=3851694)[0m                                      'update_iteration': 1,
-[36m(main_task pid=3851694)[0m                                      'valid_program_filter': 'all'},
-[36m(main_task pid=3851694)[0m          'error_seed_dataset': None,
-[36m(main_task pid=3851694)[0m          'execute_max_timeout': 30,
-[36m(main_task pid=3851694)[0m          'executor': 'bvbrc_shell',
-[36m(main_task pid=3851694)[0m          'executor_cleanup_frequency': 1,
-[36m(main_task pid=3851694)[0m          'executor_max_workers': 1,
-[36m(main_task pid=3851694)[0m          'gen_data_probabilities_strategy': 'uniform',
-[36m(main_task pid=3851694)[0m          'manual_bio_solutions_path': None,
-[36m(main_task pid=3851694)[0m          'output_code_f_seed_path': None,
-[36m(main_task pid=3851694)[0m          'output_error_seed_path': None,
-[36m(main_task pid=3851694)[0m          'output_seed_path': None,
-[36m(main_task pid=3851694)[0m          'past_epoch_window': 1,
-[36m(main_task pid=3851694)[0m          'pred_data_mix_strategy': 'max_new',
-[36m(main_task pid=3851694)[0m          'pretrain_pred_steps': -1,
-[36m(main_task pid=3851694)[0m          'problem_types': ['bio_bvbrc'],
-[36m(main_task pid=3851694)[0m          'random_print_max_programs': 3,
-[36m(main_task pid=3851694)[0m          'reward': {'code_f_reward_type': 'binary',
-[36m(main_task pid=3851694)[0m                     'extract_code_block': False,
-[36m(main_task pid=3851694)[0m                     'generation_reward_config': {'answer_diversity_reward': {'coef': 0.0,
-[36m(main_task pid=3851694)[0m                                                                              'enabled': False,
-[36m(main_task pid=3851694)[0m                                                                              'hierarchical': False,
-[36m(main_task pid=3851694)[0m                                                                              'max': 0.5},
-[36m(main_task pid=3851694)[0m                                                  'complexity_reward': {'coef': 0.0,
-[36m(main_task pid=3851694)[0m                                                                        'enabled': False,
-[36m(main_task pid=3851694)[0m                                                                        'max': 0.5},
-[36m(main_task pid=3851694)[0m                                                  'f_input_answer_diversity_reward': {'coef': 0.0,
-[36m(main_task pid=3851694)[0m                                                                                      'enabled': False,
-[36m(main_task pid=3851694)[0m                                                                                      'hierarchical': False,
-[36m(main_task pid=3851694)[0m                                                                                      'max': 0.5},
-[36m(main_task pid=3851694)[0m                                                  'f_output_answer_diversity_reward': {'coef': 0.0,
-[36m(main_task pid=3851694)[0m                                                                                       'enabled': False,
-[36m(main_task pid=3851694)[0m                                                                                       'hierarchical': False,
-[36m(main_task pid=3851694)[0m                                                                                       'max': 0.5},
-[36m(main_task pid=3851694)[0m                                                  'f_replace_location': 'not_first',
-[36m(main_task pid=3851694)[0m                                                  'format_reward': True,
-[36m(main_task pid=3851694)[0m                                                  'generation_accuracy_convertion': 'one_minus',
-[36m(main_task pid=3851694)[0m                                                  'halstead_reward': {'coef': 0.0,
-[36m(main_task pid=3851694)[0m                                                                      'enabled': False,
-[36m(main_task pid=3851694)[0m                                                                      'max': 0.5},
-[36m(main_task pid=3851694)[0m                                                  'include_references': True,
-[36m(main_task pid=3851694)[0m                                                  'intrinsic_combine_method': 'sum',
-[36m(main_task pid=3851694)[0m                                                  'mean_edit_distance_reward': {'coef': 0.0,
-[36m(main_task pid=3851694)[0m                                                                                'enabled': False,
-[36m(main_task pid=3851694)[0m                                                                                'max': 0.5},
-[36m(main_task pid=3851694)[0m                                                  'reject_multiple_functions': True,
-[36m(main_task pid=3851694)[0m                                                  'reject_test_input_in_code': False,
-[36m(main_task pid=3851694)[0m                                                  'remove_after_return': False,
-[36m(main_task pid=3851694)[0m                                                  'remove_comments': False,
-[36m(main_task pid=3851694)[0m                                                  'remove_input_from_snippet': False,
-[36m(main_task pid=3851694)[0m                                                  'remove_print': False,
-[36m(main_task pid=3851694)[0m                                                  'use_original_code_as_ref': False},
-[36m(main_task pid=3851694)[0m                     'n_samples': 8,
-[36m(main_task pid=3851694)[0m                     'num_examine': 1},
-[36m(main_task pid=3851694)[0m          'seed': 1,
-[36m(main_task pid=3851694)[0m          'seed_dataset': None,
-[36m(main_task pid=3851694)[0m          'train_propose': False},
-[36m(main_task pid=3851694)[0m  'critic': {'cliprange_value': 0.5,
+2025-07-09 11:55:38,463	INFO worker.py:1821 -- Started a local Ray instance.
+[36m(pid=2735044)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+[36m(pid=2735044)[0m   warnings.warn(
+[36m(main_task pid=2735044)[0m {'actor_rollout_ref': {'actor': {'clip_ratio': 0.2,
+[36m(main_task pid=2735044)[0m                                  'entropy_coeff': 0.001,
+[36m(main_task pid=2735044)[0m                                  'fsdp_config': {'fsdp_size': -1,
+[36m(main_task pid=2735044)[0m                                                  'grad_offload': False,
+[36m(main_task pid=2735044)[0m                                                  'optimizer_offload': False,
+[36m(main_task pid=2735044)[0m                                                  'param_offload': False,
+[36m(main_task pid=2735044)[0m                                                  'wrap_policy': {'min_num_params': 0}},
+[36m(main_task pid=2735044)[0m                                  'grad_clip': 1.0,
+[36m(main_task pid=2735044)[0m                                  'optim': {'lr': 1e-06,
+[36m(main_task pid=2735044)[0m                                            'lr_warmup_steps_ratio': 0.0,
+[36m(main_task pid=2735044)[0m                                            'min_lr_ratio': None,
+[36m(main_task pid=2735044)[0m                                            'total_training_steps': -1,
+[36m(main_task pid=2735044)[0m                                            'warmup_style': 'constant'},
+[36m(main_task pid=2735044)[0m                                  'ppo_epochs': 1,
+[36m(main_task pid=2735044)[0m                                  'ppo_max_token_len_per_gpu': 18432,
+[36m(main_task pid=2735044)[0m                                  'ppo_micro_batch_size': None,
+[36m(main_task pid=2735044)[0m                                  'ppo_micro_batch_size_per_gpu': 2,
+[36m(main_task pid=2735044)[0m                                  'ppo_mini_batch_size': 32,
+[36m(main_task pid=2735044)[0m                                  'shuffle': False,
+[36m(main_task pid=2735044)[0m                                  'strategy': 'fsdp',
+[36m(main_task pid=2735044)[0m                                  'ulysses_sequence_parallel_size': 1,
+[36m(main_task pid=2735044)[0m                                  'use_dynamic_bsz': False,
+[36m(main_task pid=2735044)[0m                                  'use_kl_loss': False},
+[36m(main_task pid=2735044)[0m                        'hybrid_engine': True,
+[36m(main_task pid=2735044)[0m                        'model': {'enable_gradient_checkpointing': True,
+[36m(main_task pid=2735044)[0m                                  'external_lib': None,
+[36m(main_task pid=2735044)[0m                                  'override_config': {},
+[36m(main_task pid=2735044)[0m                                  'path': 'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+[36m(main_task pid=2735044)[0m                                  'pretrained_tokenizer': True,
+[36m(main_task pid=2735044)[0m                                  'use_remove_padding': False},
+[36m(main_task pid=2735044)[0m                        'ref': {'fsdp_config': {'param_offload': False,
+[36m(main_task pid=2735044)[0m                                                'wrap_policy': {'min_num_params': 0}},
+[36m(main_task pid=2735044)[0m                                'include_ref': True,
+[36m(main_task pid=2735044)[0m                                'log_prob_max_token_len_per_gpu': 18432,
+[36m(main_task pid=2735044)[0m                                'log_prob_micro_batch_size': None,
+[36m(main_task pid=2735044)[0m                                'log_prob_micro_batch_size_per_gpu': 2,
+[36m(main_task pid=2735044)[0m                                'log_prob_use_dynamic_bsz': False,
+[36m(main_task pid=2735044)[0m                                'ulysses_sequence_parallel_size': 1},
+[36m(main_task pid=2735044)[0m                        'rollout': {'disable_log_stats': True,
+[36m(main_task pid=2735044)[0m                                    'do_sample': True,
+[36m(main_task pid=2735044)[0m                                    'dtype': 'bfloat16',
+[36m(main_task pid=2735044)[0m                                    'enable_chunked_prefill': True,
+[36m(main_task pid=2735044)[0m                                    'enforce_eager': True,
+[36m(main_task pid=2735044)[0m                                    'free_cache_engine': True,
+[36m(main_task pid=2735044)[0m                                    'gpu_memory_utilization': 0.5,
+[36m(main_task pid=2735044)[0m                                    'ignore_eos': False,
+[36m(main_task pid=2735044)[0m                                    'load_format': 'dummy_dtensor',
+[36m(main_task pid=2735044)[0m                                    'log_prob_max_token_len_per_gpu': 18432,
+[36m(main_task pid=2735044)[0m                                    'log_prob_micro_batch_size': None,
+[36m(main_task pid=2735044)[0m                                    'log_prob_micro_batch_size_per_gpu': 2,
+[36m(main_task pid=2735044)[0m                                    'log_prob_use_dynamic_bsz': False,
+[36m(main_task pid=2735044)[0m                                    'max_num_batched_tokens': 8192,
+[36m(main_task pid=2735044)[0m                                    'max_num_seqs': 512,
+[36m(main_task pid=2735044)[0m                                    'n': 1,
+[36m(main_task pid=2735044)[0m                                    'name': 'vllm',
+[36m(main_task pid=2735044)[0m                                    'prompt_length': 2048,
+[36m(main_task pid=2735044)[0m                                    'response_length': 8192,
+[36m(main_task pid=2735044)[0m                                    'temperature': 0.7,
+[36m(main_task pid=2735044)[0m                                    'tensor_model_parallel_size': 1,
+[36m(main_task pid=2735044)[0m                                    'top_k': -1,
+[36m(main_task pid=2735044)[0m                                    'top_p': 1}},
+[36m(main_task pid=2735044)[0m  'algorithm': {'adv_estimator': 'reinforce_plus_plus',
+[36m(main_task pid=2735044)[0m                'gamma': 1.0,
+[36m(main_task pid=2735044)[0m                'kl_ctrl': {'kl_coef': 0.001, 'type': 'fixed'},
+[36m(main_task pid=2735044)[0m                'kl_penalty': 'kl',
+[36m(main_task pid=2735044)[0m                'lam': 1.0},
+[36m(main_task pid=2735044)[0m  'azr': {'ast_check': True,
+[36m(main_task pid=2735044)[0m          'code_f_seed_dataset': None,
+[36m(main_task pid=2735044)[0m          'data_selection_strategy': {'banned_keywords_for_errors_and_exceptions': None,
+[36m(main_task pid=2735044)[0m                                      'banned_words': ['logging',
+[36m(main_task pid=2735044)[0m                                                       'random',
+[36m(main_task pid=2735044)[0m                                                       'multiprocessing',
+[36m(main_task pid=2735044)[0m                                                       'pebble',
+[36m(main_task pid=2735044)[0m                                                       'subprocess',
+[36m(main_task pid=2735044)[0m                                                       'threading',
+[36m(main_task pid=2735044)[0m                                                       'datetime',
+[36m(main_task pid=2735044)[0m                                                       'time',
+[36m(main_task pid=2735044)[0m                                                       'hashlib',
+[36m(main_task pid=2735044)[0m                                                       'hmac',
+[36m(main_task pid=2735044)[0m                                                       'bcrypt',
+[36m(main_task pid=2735044)[0m                                                       'os.sys',
+[36m(main_task pid=2735044)[0m                                                       'os.path',
+[36m(main_task pid=2735044)[0m                                                       'sys.exit',
+[36m(main_task pid=2735044)[0m                                                       'os.environ',
+[36m(main_task pid=2735044)[0m                                                       'calendar',
+[36m(main_task pid=2735044)[0m                                                       'datetime'],
+[36m(main_task pid=2735044)[0m                                      'batched_estimate': False,
+[36m(main_task pid=2735044)[0m                                      'composite_chance': 0.5,
+[36m(main_task pid=2735044)[0m                                      'composite_chance_initial': 0.5,
+[36m(main_task pid=2735044)[0m                                      'composite_function_n_max': -1,
+[36m(main_task pid=2735044)[0m                                      'composite_function_n_min': -1,
+[36m(main_task pid=2735044)[0m                                      'composite_scheduler': {'enabled': False,
+[36m(main_task pid=2735044)[0m                                                              'num_programs_max': 3,
+[36m(main_task pid=2735044)[0m                                                              'update_num_programs_interval': 50,
+[36m(main_task pid=2735044)[0m                                                              'update_num_programs_start': 101,
+[36m(main_task pid=2735044)[0m                                                              'update_probability_increment': 0.01,
+[36m(main_task pid=2735044)[0m                                                              'update_probability_interval': 50,
+[36m(main_task pid=2735044)[0m                                                              'update_probability_max': 0.8,
+[36m(main_task pid=2735044)[0m                                                              'update_probability_start': 101},
+[36m(main_task pid=2735044)[0m                                      'composite_start_step': -1,
+[36m(main_task pid=2735044)[0m                                      'content_max_length': 1024,
+[36m(main_task pid=2735044)[0m                                      'data_len': None,
+[36m(main_task pid=2735044)[0m                                      'io_n': 6,
+[36m(main_task pid=2735044)[0m                                      'max_programs': None,
+[36m(main_task pid=2735044)[0m                                      'max_programs_initial': -1,
+[36m(main_task pid=2735044)[0m                                      'num_inputs': 10,
+[36m(main_task pid=2735044)[0m                                      'seed_batch_factor': 4,
+[36m(main_task pid=2735044)[0m                                      'update_iteration': 1,
+[36m(main_task pid=2735044)[0m                                      'valid_program_filter': 'all'},
+[36m(main_task pid=2735044)[0m          'error_seed_dataset': None,
+[36m(main_task pid=2735044)[0m          'execute_max_timeout': 10,
+[36m(main_task pid=2735044)[0m          'executor': 'qwq',
+[36m(main_task pid=2735044)[0m          'executor_cleanup_frequency': 1,
+[36m(main_task pid=2735044)[0m          'executor_max_workers': 1,
+[36m(main_task pid=2735044)[0m          'gen_data_probabilities_strategy': 'uniform',
+[36m(main_task pid=2735044)[0m          'manual_bio_solutions_path': None,
+[36m(main_task pid=2735044)[0m          'output_code_f_seed_path': None,
+[36m(main_task pid=2735044)[0m          'output_error_seed_path': None,
+[36m(main_task pid=2735044)[0m          'output_seed_path': None,
+[36m(main_task pid=2735044)[0m          'past_epoch_window': 1,
+[36m(main_task pid=2735044)[0m          'pred_data_mix_strategy': 'max_new',
+[36m(main_task pid=2735044)[0m          'pretrain_pred_steps': 0,
+[36m(main_task pid=2735044)[0m          'problem_types': ['mc'],
+[36m(main_task pid=2735044)[0m          'random_print_max_programs': 3,
+[36m(main_task pid=2735044)[0m          'reward': {'code_f_reward_type': 'binary',
+[36m(main_task pid=2735044)[0m                     'extract_code_block': False,
+[36m(main_task pid=2735044)[0m                     'generation_reward_config': {'answer_diversity_reward': {'coef': 0.0,
+[36m(main_task pid=2735044)[0m                                                                              'enabled': False,
+[36m(main_task pid=2735044)[0m                                                                              'hierarchical': False,
+[36m(main_task pid=2735044)[0m                                                                              'max': 0.5},
+[36m(main_task pid=2735044)[0m                                                  'complexity_reward': {'coef': 0.0,
+[36m(main_task pid=2735044)[0m                                                                        'enabled': False,
+[36m(main_task pid=2735044)[0m                                                                        'max': 0.5},
+[36m(main_task pid=2735044)[0m                                                  'f_input_answer_diversity_reward': {'coef': 0.0,
+[36m(main_task pid=2735044)[0m                                                                                      'enabled': False,
+[36m(main_task pid=2735044)[0m                                                                                      'hierarchical': False,
+[36m(main_task pid=2735044)[0m                                                                                      'max': 0.5},
+[36m(main_task pid=2735044)[0m                                                  'f_output_answer_diversity_reward': {'coef': 0.0,
+[36m(main_task pid=2735044)[0m                                                                                       'enabled': False,
+[36m(main_task pid=2735044)[0m                                                                                       'hierarchical': False,
+[36m(main_task pid=2735044)[0m                                                                                       'max': 0.5},
+[36m(main_task pid=2735044)[0m                                                  'f_replace_location': 'not_first',
+[36m(main_task pid=2735044)[0m                                                  'format_reward': False,
+[36m(main_task pid=2735044)[0m                                                  'generation_accuracy_convertion': 'one_minus',
+[36m(main_task pid=2735044)[0m                                                  'halstead_reward': {'coef': 0.0,
+[36m(main_task pid=2735044)[0m                                                                      'enabled': False,
+[36m(main_task pid=2735044)[0m                                                                      'max': 0.5},
+[36m(main_task pid=2735044)[0m                                                  'include_references': True,
+[36m(main_task pid=2735044)[0m                                                  'intrinsic_combine_method': 'sum',
+[36m(main_task pid=2735044)[0m                                                  'mean_edit_distance_reward': {'coef': 0.0,
+[36m(main_task pid=2735044)[0m                                                                                'enabled': False,
+[36m(main_task pid=2735044)[0m                                                                                'max': 0.5},
+[36m(main_task pid=2735044)[0m                                                  'reject_multiple_functions': True,
+[36m(main_task pid=2735044)[0m                                                  'reject_test_input_in_code': False,
+[36m(main_task pid=2735044)[0m                                                  'remove_after_return': False,
+[36m(main_task pid=2735044)[0m                                                  'remove_comments': False,
+[36m(main_task pid=2735044)[0m                                                  'remove_input_from_snippet': False,
+[36m(main_task pid=2735044)[0m                                                  'remove_print': False,
+[36m(main_task pid=2735044)[0m                                                  'use_original_code_as_ref': False},
+[36m(main_task pid=2735044)[0m                     'n_samples': 8,
+[36m(main_task pid=2735044)[0m                     'num_examine': 3,
+[36m(main_task pid=2735044)[0m                     'reward_max_tokens': 512,
+[36m(main_task pid=2735044)[0m                     'reward_model_name': None,
+[36m(main_task pid=2735044)[0m                     'reward_model_path': None,
+[36m(main_task pid=2735044)[0m                     'reward_temperature': 1.0},
+[36m(main_task pid=2735044)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/vllm/connections.py:8: RuntimeWarning: Failed to read commit hash:
+[36m(main_task pid=2735044)[0m No module named 'vllm._version'
+[36m(main_task pid=2735044)[0m   from vllm.version import __version__ as VLLM_VERSION
+[36m(pid=2736062)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+[36m(pid=2736062)[0m   warnings.warn(
+[36m(pid=2737052)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+[36m(pid=2737052)[0m   warnings.warn(
+[36m(pid=2737052)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/vllm/connections.py:8: RuntimeWarning: Failed to read commit hash:
+[36m(pid=2737052)[0m No module named 'vllm._version'
+[36m(pid=2737052)[0m   from vllm.version import __version__ as VLLM_VERSION
+[36m(pid=2739061)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+[36m(pid=2739061)[0m   warnings.warn(
+[36m(pid=2739060)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+[36m(pid=2739060)[0m   warnings.warn(
+[36m(pid=2739061)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/vllm/connections.py:8: RuntimeWarning: Failed to read commit hash:
+[36m(pid=2739061)[0m No module named 'vllm._version'
+[36m(pid=2739061)[0m   from vllm.version import __version__ as VLLM_VERSION
+[36m(WorkerDict pid=2739061)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+[36m(WorkerDict pid=2739061)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(WorkerDict pid=2739061)[0m Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 20.23it/s]
+[36m(pid=2739062)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/transformers/utils/hub.py:105: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.[32m [repeated 5x across cluster] (Ray deduplicates logs by default. Set RAY_DEDUP_LOGS=0 to disable log deduplication, or see https://docs.ray.io/en/master/ray-observability/user-guides/configure-logging.html#log-deduplication for more options.)[0m
+[36m(pid=2739062)[0m   warnings.warn([32m [repeated 5x across cluster][0m
+[36m(pid=2739060)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/vllm/connections.py:8: RuntimeWarning: Failed to read commit hash:
+[36m(pid=2739060)[0m No module named 'vllm._version'
+[36m(pid=2739060)[0m   from vllm.version import __version__ as VLLM_VERSION
+[36m(pid=2739058)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/vllm/connections.py:8: RuntimeWarning: Failed to read commit hash:
+[36m(pid=2739058)[0m No module named 'vllm._version'
+[36m(pid=2739058)[0m   from vllm.version import __version__ as VLLM_VERSION
+[36m(main_task pid=2735044)[0m          'seed': 1,
+[36m(main_task pid=2735044)[0m          'seed_dataset': None,
+[36m(main_task pid=2735044)[0m          'train_propose': False},
+[36m(main_task pid=2735044)[0m  'critic': {'cliprange_value': 0.5,
+[36m(main_task pid=2735044)[0m             'forward_max_token_len_per_gpu': 27648,
+[36m(main_task pid=2735044)[0m             'forward_micro_batch_size': 2,
+[36m(main_task pid=2735044)[0m             'forward_micro_batch_size_per_gpu': 2,
+[36m(main_task pid=2735044)[0m             'grad_clip': 1.0,
+[36m(main_task pid=2735044)[0m             'model': {'enable_gradient_checkpointing': True,
+[36m(main_task pid=2735044)[0m                       'external_lib': None,
+[36m(main_task pid=2735044)[0m                       'fsdp_config': {'fsdp_size': -1,
+[36m(main_task pid=2735044)[0m                                       'grad_offload': False,
+[36m(main_task pid=2735044)[0m                                       'optimizer_offload': False,
+[36m(main_task pid=2735044)[0m                                       'param_offload': False,
+[36m(main_task pid=2735044)[0m                                       'wrap_policy': {'min_num_params': 0}},
+[36m(main_task pid=2735044)[0m                       'override_config': {},
+[36m(main_task pid=2735044)[0m                       'path': 'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+[36m(main_task pid=2735044)[0m                       'tokenizer_path': 'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+[36m(main_task pid=2735044)[0m                       'use_remove_padding': False},
+[36m(main_task pid=2735044)[0m             'optim': {'lr': 1e-06,
+[36m(main_task pid=2735044)[0m                       'lr_warmup_steps_ratio': 0.0,
+[36m(main_task pid=2735044)[0m                       'min_lr_ratio': None,
+[36m(main_task pid=2735044)[0m                       'total_training_steps': -1,
+[36m(main_task pid=2735044)[0m                       'warmup_style': 'constant'},
+[36m(main_task pid=2735044)[0m             'ppo_epochs': 1,
+[36m(main_task pid=2735044)[0m             'ppo_max_token_len_per_gpu': 27648,
+[36m(main_task pid=2735044)[0m             'ppo_micro_batch_size': None,
+[36m(main_task pid=2735044)[0m             'ppo_micro_batch_size_per_gpu': 2,
+[36m(main_task pid=2735044)[0m             'ppo_mini_batch_size': 32,
+[36m(main_task pid=2735044)[0m             'shuffle': False,
+[36m(main_task pid=2735044)[0m             'strategy': 'fsdp',
+[36m(main_task pid=2735044)[0m             'ulysses_sequence_parallel_size': 1,
+[36m(main_task pid=2735044)[0m             'use_dynamic_bsz': False},
+[36m(main_task pid=2735044)[0m  'data': {'max_prompt_length': 2048,
+[36m(main_task pid=2735044)[0m           'max_response_length': 8192,
+[36m(main_task pid=2735044)[0m           'max_validation_prompt_length': 2048,
+[36m(main_task pid=2735044)[0m           'prompt_key': 'prompt',
+[36m(main_task pid=2735044)[0m           'return_raw_chat': True,
+[36m(main_task pid=2735044)[0m           'return_raw_input_ids': False,
+[36m(main_task pid=2735044)[0m           'shuffle': True,
+[36m(main_task pid=2735044)[0m           'tokenizer': None,
+[36m(main_task pid=2735044)[0m           'train_batch_size': 16,
+[36m(main_task pid=2735044)[0m           'train_files': 'data/bio_llm/bio_llm_questions.parquet',
+[36m(main_task pid=2735044)[0m           'val_batch_size': 16,
+[36m(main_task pid=2735044)[0m           'val_files': 'data/bio_llm/bio_llm_questions.parquet'},
+[36m(main_task pid=2735044)[0m  'reward_fn': {'boxed_retry': False,
+[36m(main_task pid=2735044)[0m                'extraction_type': 'boxed',
+[36m(main_task pid=2735044)[0m                'math_metric': 'deepscaler',
+[36m(main_task pid=2735044)[0m                'splitter': 'Assistant:'},
+[36m(main_task pid=2735044)[0m  'reward_model': {'enable': False,
+[36m(main_task pid=2735044)[0m                   'forward_max_token_len_per_gpu': 27648,
+[36m(main_task pid=2735044)[0m                   'max_length': None,
+[36m(main_task pid=2735044)[0m                   'micro_batch_size': None,
+[36m(main_task pid=2735044)[0m                   'micro_batch_size_per_gpu': 2,
+[36m(main_task pid=2735044)[0m                   'model': {'external_lib': None,
+[36m(main_task pid=2735044)[0m                             'fsdp_config': {'fsdp_size': -1,
+[36m(main_task pid=2735044)[0m                                             'min_num_params': 0,
+[36m(main_task pid=2735044)[0m                                             'param_offload': False},
+[36m(main_task pid=2735044)[0m                             'input_tokenizer': 'deepseek-ai/DeepSeek-R1-Distill-Llama-8B',
+[36m(main_task pid=2735044)[0m                             'path': '~/models/FsfairX-LLaMA3-RM-v0.1',
+[36m(main_task pid=2735044)[0m                             'use_remove_padding': False},
+[36m(main_task pid=2735044)[0m                   'strategy': 'fsdp',
+[36m(main_task pid=2735044)[0m                   'ulysses_sequence_parallel_size': 1,
+[36m(main_task pid=2735044)[0m                   'use_dynamic_bsz': False},
+[36m(main_task pid=2735044)[0m  'trainer': {'critic_warmup': 0,
+[36m(main_task pid=2735044)[0m              'debug': False,
+[36m(main_task pid=2735044)[0m              'debug_port': 5678,
+[36m(main_task pid=2735044)[0m              'default_hdfs_dir': None,
+[36m(main_task pid=2735044)[0m              'default_local_dir': 'checkpoints/bio_reasoning/bio_reasoning/bio_llm_only_long_response',
+[36m(main_task pid=2735044)[0m              'del_local_ckpt_after_load': False,
+[36m(main_task pid=2735044)[0m              'disable_batch_balancing': False,
+[36m(main_task pid=2735044)[0m              'experiment_name': 'bio_llm_only_long_response',
+[36m(main_task pid=2735044)[0m              'log_generations': True,
+[36m(main_task pid=2735044)[0m              'log_generations_file': 'generations.log',
+[36m(main_task pid=2735044)[0m              'logger': ['console', 'wandb'],
+[36m(main_task pid=2735044)[0m              'n_gpus_per_node': 8,
+[36m(main_task pid=2735044)[0m              'nnodes': 1,
+[36m(main_task pid=2735044)[0m              'project_name': 'bio_reasoning',
+[36m(main_task pid=2735044)[0m              'remove_previous_ckpt_in_save': False,
+[36m(main_task pid=2735044)[0m              'resume_from_path': False,
+[36m(main_task pid=2735044)[0m              'resume_mode': 'auto',
+[36m(main_task pid=2735044)[0m              'save_freq': 5,
+[36m(main_task pid=2735044)[0m              'test_freq': 2,
+[36m(main_task pid=2735044)[0m              'total_epochs': 100,
+[36m(main_task pid=2735044)[0m              'total_training_steps': None,
+[36m(main_task pid=2735044)[0m              'val_generations_to_log_to_wandb': 5,
+[36m(main_task pid=2735044)[0m              'wandb_run_id': None,
+[36m(main_task pid=2735044)[0m              'wandb_tags': None}}
+[36m(main_task pid=2735044)[0m 'auto setting ppo_mini_batch_size: 16'
+[36m(main_task pid=2735044)[0m 'auto setting data_len: 16'
+[36m(main_task pid=2735044)[0m [validate_config] All configuration checks passed successfully!
+[36m(main_task pid=2735044)[0m original dataset len: 1092. Source: train
+[36m(main_task pid=2735044)[0m filter dataset len: 1092. Source: train
+[36m(main_task pid=2735044)[0m original dataset len: 1092. Source: val
+[36m(main_task pid=2735044)[0m filter dataset len: 1092. Source: val
+[36m(main_task pid=2735044)[0m Size of train dataloader: 68
+[36m(main_task pid=2735044)[0m Size of val dataloader: 1
+[36m(main_task pid=2735044)[0m Total training steps: 6800
+[36m(WorkerDict pid=2737052)[0m Model config after override: LlamaConfig {
+[36m(WorkerDict pid=2737052)[0m   "architectures": [
+[36m(WorkerDict pid=2737052)[0m     "LlamaForCausalLM"
+[36m(WorkerDict pid=2737052)[0m   ],
+[36m(WorkerDict pid=2737052)[0m   "attention_bias": false,
+[36m(WorkerDict pid=2737052)[0m   "attention_dropout": 0.0,
+[36m(WorkerDict pid=2737052)[0m   "bos_token_id": 128000,
+[36m(WorkerDict pid=2737052)[0m   "eos_token_id": 128001,
+[36m(WorkerDict pid=2739060)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+[36m(WorkerDict pid=2739060)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(WorkerDict pid=2739059)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+[36m(WorkerDict pid=2739056)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 82.60it/s]
+[36m(WorkerDict pid=2739057)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(WorkerDict pid=2739060)[0m Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 84.43it/s]
+[36m(WorkerDict pid=2737052)[0m Loading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  7.23s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  7.23s/it]
+[36m(pid=2739062)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/vllm/connections.py:8: RuntimeWarning: Failed to read commit hash:[32m [repeated 4x across cluster][0m
+[36m(pid=2739062)[0m No module named 'vllm._version'[32m [repeated 4x across cluster][0m
+[36m(pid=2739062)[0m   from vllm.version import __version__ as VLLM_VERSION[32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=2739058)[0m You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.[32m [repeated 5x across cluster][0m
+[36m(WorkerDict pid=2739058)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 93.26it/s][32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=2737052)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=2739059)[0m Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 81.25it/s][32m [repeated 2x across cluster][0m
+[36m(WorkerDict pid=2739060)[0m Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in LlamaForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`
+[36m(WorkerDict pid=2739060)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(WorkerDict pid=2739060)[0m Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 88.75it/s]
+[36m(WorkerDict pid=2739059)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+[36m(WorkerDict pid=2739062)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 89.64it/s]
+[36m(WorkerDict pid=2737052)[0m Loading checkpoint shards:  50%|█████     | 1/2 [00:18<00:18, 18.51s/it]
+[36m(WorkerDict pid=2739056)[0m Flash Attention 2.0 only supports torch.float16 and torch.bfloat16 dtypes, but the current dype in LlamaForCausalLM is torch.float32. You should run training or inference using Automatic Mixed-Precision via the `with torch.autocast(device_type='torch_device'):` decorator, or load the model with the `torch_dtype` argument. Example: `model = AutoModel.from_pretrained("openai/whisper-tiny", attn_implementation="flash_attention_2", torch_dtype=torch.float16)`[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2739058)[0m Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 97.72it/s][32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=2737052)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][32m [repeated 4x across cluster][0m
+[36m(WorkerDict pid=2739056)[0m Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 94.29it/s]
+[36m(WorkerDict pid=2737052)[0m Loading checkpoint shards: 100%|██████████| 2/2 [00:32<00:00, 15.96s/it]Loading checkpoint shards: 100%|██████████| 2/2 [00:32<00:00, 16.34s/it]
+[36m(WorkerDict pid=2739058)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py:689: FutureWarning: FSDP.state_dict_type() and FSDP.set_state_dict_type() are being deprecated. Please use APIs, get_state_dict() and set_state_dict(), which can support different parallelisms, FSDP1, FSDP2, DDP. API doc: https://pytorch.org/docs/stable/distributed.checkpoint.html#torch.distributed.checkpoint.state_dict.get_state_dict .Tutorial: https://pytorch.org/tutorials/recipes/distributed_checkpoint_recipe.html .
+[36m(WorkerDict pid=2739058)[0m   warnings.warn(
+[36m(main_task pid=2735044)[0m wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+[36m(main_task pid=2735044)[0m wandb: Currently logged in as: chian to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+[36m(main_task pid=2735044)[0m wandb: Tracking run with wandb version 0.19.8
+[36m(main_task pid=2735044)[0m wandb: Run data is saved locally in /scratch/chia/Absolute-Zero-Reasoner/wandb/run-20250709_115759-s8ic8zmr
+[36m(main_task pid=2735044)[0m wandb: Run `wandb offline` to turn off syncing.
+[36m(main_task pid=2735044)[0m wandb: Syncing run bio_llm_only_long_response
+[36m(main_task pid=2735044)[0m wandb: ⭐️ View project at https://wandb.ai/chian/bio_reasoning
+[36m(main_task pid=2735044)[0m wandb: 🚀 View run at https://wandb.ai/chian/bio_reasoning/runs/s8ic8zmr
+[36m(WorkerDict pid=2737052)[0m   "head_dim": 128,
+[36m(WorkerDict pid=2737052)[0m   "hidden_act": "silu",
+[36m(WorkerDict pid=2737052)[0m   "hidden_size": 4096,
+[36m(WorkerDict pid=2737052)[0m   "initializer_range": 0.02,
+[36m(WorkerDict pid=2737052)[0m   "intermediate_size": 14336,
+[36m(WorkerDict pid=2737052)[0m   "max_position_embeddings": 131072,
+[36m(WorkerDict pid=2737052)[0m   "mlp_bias": false,
+[36m(WorkerDict pid=2737052)[0m   "model_type": "llama",
+[36m(WorkerDict pid=2737052)[0m   "num_attention_heads": 32,
+[36m(WorkerDict pid=2737052)[0m   "num_hidden_layers": 32,
+[36m(WorkerDict pid=2737052)[0m   "num_key_value_heads": 8,
+[36m(WorkerDict pid=2737052)[0m   "pad_token_id": 128001,
+[36m(WorkerDict pid=2737052)[0m   "pretraining_tp": 1,
+[36m(WorkerDict pid=2737052)[0m   "rms_norm_eps": 1e-05,
+[36m(WorkerDict pid=2737052)[0m   "rope_scaling": {
+[36m(WorkerDict pid=2737052)[0m     "factor": 8.0,
+[36m(WorkerDict pid=2737052)[0m     "high_freq_factor": 4.0,
+[36m(WorkerDict pid=2737052)[0m     "low_freq_factor": 1.0,
+[36m(WorkerDict pid=2737052)[0m     "original_max_position_embeddings": 8192,
+[36m(WorkerDict pid=2737052)[0m     "rope_type": "llama3"
+[36m(WorkerDict pid=2737052)[0m   },
+[36m(WorkerDict pid=2737052)[0m   "rope_theta": 500000.0,
+[36m(WorkerDict pid=2737052)[0m   "tie_word_embeddings": false,
+[36m(WorkerDict pid=2737052)[0m   "torch_dtype": "bfloat16",
+[36m(WorkerDict pid=2737052)[0m   "transformers_version": "4.50.3",
+[36m(WorkerDict pid=2737052)[0m   "use_cache": true,
+[36m(WorkerDict pid=2737052)[0m   "vocab_size": 128256
+[36m(WorkerDict pid=2737052)[0m }
+[36m(WorkerDict pid=2737052)[0m 
+[36m(WorkerDict pid=2737052)[0m NCCL version 2.20.5+cuda12.4
+[36m(WorkerDict pid=2739059)[0m wrap_policy: functools.partial(<function _or_policy at 0x7ef87459fac0>, policies=[functools.partial(<function transformer_auto_wrap_policy at 0x7ef87459f9a0>, transformer_layer_cls={<class 'transformers.models.llama.modeling_llama.LlamaDecoderLayer'>})])
+[36m(WorkerDict pid=2737052)[0m LlamaForCausalLM contains 8.03B parameters
+[36m(WorkerDict pid=2737052)[0m Actor use_remove_padding=False
+[36m(WorkerDict pid=2739062)[0m wrap_policy: functools.partial(<function _or_policy at 0x7f2826513ac0>, policies=[functools.partial(<function transformer_auto_wrap_policy at 0x7f28265139a0>, transformer_layer_cls={<class 'transformers.models.llama.modeling_llama.LlamaDecoderLayer'>})])[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2737052)[0m Model config after override: LlamaConfig {
+[36m(WorkerDict pid=2737052)[0m   "architectures": [
+[36m(WorkerDict pid=2737052)[0m     "LlamaForCausalLM"
+[36m(WorkerDict pid=2737052)[0m   ],
+[36m(WorkerDict pid=2737052)[0m   "attention_bias": false,
+[36m(WorkerDict pid=2737052)[0m   "attention_dropout": 0.0,
+[36m(WorkerDict pid=2737052)[0m   "bos_token_id": 128000,
+[36m(WorkerDict pid=2737052)[0m   "eos_token_id": 128001,
+[36m(WorkerDict pid=2737052)[0m   "head_dim": 128,
+[36m(WorkerDict pid=2737052)[0m   "hidden_act": "silu",
+[36m(WorkerDict pid=2737052)[0m   "hidden_size": 4096,
+[36m(WorkerDict pid=2737052)[0m   "initializer_range": 0.02,
+[36m(WorkerDict pid=2737052)[0m   "intermediate_size": 14336,
+[36m(WorkerDict pid=2737052)[0m   "max_position_embeddings": 131072,
+[36m(WorkerDict pid=2737052)[0m   "mlp_bias": false,
+[36m(WorkerDict pid=2737052)[0m   "model_type": "llama",
+[36m(WorkerDict pid=2737052)[0m   "num_attention_heads": 32,
+[36m(WorkerDict pid=2737052)[0m   "num_hidden_layers": 32,
+[36m(WorkerDict pid=2737052)[0m   "num_key_value_heads": 8,
+[36m(WorkerDict pid=2737052)[0m   "pad_token_id": 128001,
+[36m(WorkerDict pid=2737052)[0m   "pretraining_tp": 1,
+[36m(WorkerDict pid=2737052)[0m   "rms_norm_eps": 1e-05,
+[36m(WorkerDict pid=2737052)[0m   "rope_scaling": {
+[36m(WorkerDict pid=2737052)[0m     "factor": 8.0,
+[36m(WorkerDict pid=2737052)[0m     "high_freq_factor": 4.0,
+[36m(WorkerDict pid=2737052)[0m     "low_freq_factor": 1.0,
+[36m(WorkerDict pid=2737052)[0m     "original_max_position_embeddings": 8192,
+[36m(WorkerDict pid=2737052)[0m     "rope_type": "llama3"
+[36m(WorkerDict pid=2737052)[0m   },
+[36m(WorkerDict pid=2737052)[0m   "rope_theta": 500000.0,
+[36m(WorkerDict pid=2737052)[0m   "tie_word_embeddings": false,
+[36m(WorkerDict pid=2737052)[0m   "torch_dtype": "bfloat16",
+[36m(WorkerDict pid=2737052)[0m   "transformers_version": "4.50.3",
+[36m(WorkerDict pid=2737052)[0m   "use_cache": true,
+[36m(WorkerDict pid=2737052)[0m   "vocab_size": 128256
+[36m(WorkerDict pid=2737052)[0m }
+[36m(WorkerDict pid=2737052)[0m 
+[36m(WorkerDict pid=2737052)[0m LlamaForCausalLM contains 8.03B parameters
+[36m(WorkerDict pid=2739061)[0m Actor use_remove_padding=False[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2737052)[0m wrap_policy: functools.partial(<function _or_policy at 0x7f869fe4bac0>, policies=[functools.partial(<function transformer_auto_wrap_policy at 0x7f869fe4b9a0>, transformer_layer_cls={<class 'transformers.models.llama.modeling_llama.LlamaDecoderLayer'>})])
+[36m(WorkerDict pid=2739062)[0m wrap_policy: functools.partial(<function _or_policy at 0x7f2826513ac0>, policies=[functools.partial(<function transformer_auto_wrap_policy at 0x7f28265139a0>, transformer_layer_cls={<class 'transformers.models.llama.modeling_llama.LlamaDecoderLayer'>})])
+[36m(WorkerDict pid=2739062)[0m Total steps: 6800, num_warmup_steps: 0
+[36m(WorkerDict pid=2739062)[0m Actor use_remove_padding=False
+[36m(WorkerDict pid=2739061)[0m wrap_policy: functools.partial(<function _or_policy at 0x7f5be7c1bac0>, policies=[functools.partial(<function transformer_auto_wrap_policy at 0x7f5be7c1b9a0>, transformer_layer_cls={<class 'transformers.models.llama.modeling_llama.LlamaDecoderLayer'>})])[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=2739059)[0m Actor use_remove_padding=False
+[36m(WorkerDict pid=2737052)[0m Before building vllm rollout, memory allocated (GB): 3.7393832206726074, memory reserved (GB): 17.501953125
+[36m(WorkerDict pid=2737052)[0m INFO 07-09 11:57:52 config.py:1005] Chunked prefill is enabled with max_num_batched_tokens=8192.
+[36m(WorkerDict pid=2737052)[0m WARNING 07-09 11:57:52 config.py:380] To see benefits of async output processing, enable CUDA graph. Since, enforce-eager is enabled, async output processor cannot be used
+[36m(WorkerDict pid=2737052)[0m Total steps: 6800, num_warmup_steps: 0[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2737052)[0m Actor use_remove_padding=False[32m [repeated 6x across cluster][0m
+[36m(WorkerDict pid=2737052)[0m local rank 0
+[36m(WorkerDict pid=2739062)[0m NCCL version 2.20.5+cuda12.4
+[36m(WorkerDict pid=2737052)[0m before init cache memory allocated: 20.142767616GB, reserved: 20.241711104GB
+[36m(WorkerDict pid=2739058)[0m kwargs: {'n': 1, 'logprobs': 1, 'max_tokens': 8192, 'detokenize': False, 'temperature': 0.7, 'top_k': -1, 'top_p': 1, 'ignore_eos': False}
+[36m(WorkerDict pid=2737052)[0m after init cache memory allocated: 57.79084032GB, reserved: 57.889783808GB
+[36m(WorkerDict pid=2739061)[0m INFO 07-09 11:57:53 config.py:1005] Chunked prefill is enabled with max_num_batched_tokens=8192.[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2739061)[0m WARNING 07-09 11:57:53 config.py:380] To see benefits of async output processing, enable CUDA graph. Since, enforce-eager is enabled, async output processor cannot be used[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2739061)[0m local rank 0[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2737052)[0m After building vllm rollout, memory allocated (GB): 38.86438703536987, memory reserved (GB): 53.9140625
+[36m(WorkerDict pid=2737052)[0m After building sharding manager, memory allocated (GB): 38.86438703536987, memory reserved (GB): 53.9140625
+[36m(main_task pid=2735044)[0m Using LocalLogger is deprecated. The constructor API will change 
+[36m(main_task pid=2735044)[0m Checkpoint tracker file does not exist: %s /scratch/chia/Absolute-Zero-Reasoner/checkpoints/bio_reasoning/bio_reasoning/bio_llm_only_long_response/bio_llm_questions/DeepSeek-R1-Distill-Llama-8B/boxed/latest_checkpointed_iteration.txt
+[36m(main_task pid=2735044)[0m Training from scratch
+[36m(main_task pid=2735044)[0m 
+[36m(main_task pid=2735044)[0m [1m[35m╒═══════════════════════════════[0m
+[36m(main_task pid=2735044)[0m [1m[35m[3m│ TRAINING FROM SCRATCH[0m
+[36m(main_task pid=2735044)[0m [1m[35m╘═══════════════════════════════[0m
+[36m(main_task pid=2735044)[0m [34mℹ[0m [1m[34m[Directory][0m Created new code directory at checkpoints/bio_reasoning/bio_reasoning/bio_llm_only_long_response/bio_llm_questions/DeepSeek-R1-Distill-Llama-8B/boxed/code
+[36m(main_task pid=2735044)[0m 
+[36m(main_task pid=2735044)[0m [1m[35m╒═══════════════════════════════[0m
+[36m(main_task pid=2735044)[0m [1m[35m[3m│ STARTING INITIAL VALIDATION[0m
+[36m(main_task pid=2735044)[0m [1m[35m╘═══════════════════════════════[0m
+[36m(WorkerDict pid=2739056)[0m NCCL version 2.20.5+cuda12.4[32m [repeated 6x across cluster][0m
+Error executing job with overrides: []
+Traceback (most recent call last):
+  File "/scratch/chia/Absolute-Zero-Reasoner/absolute_zero_reasoner/main_azr_ppo.py", line 34, in main
+    run_ppo(config)
+  File "/scratch/chia/Absolute-Zero-Reasoner/absolute_zero_reasoner/main_azr_ppo.py", line 42, in run_ppo
+    ray.get(main_task.remote(config, compute_score))
+  File "/home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/ray/_private/auto_init_hook.py", line 21, in auto_init_wrapper
+    return fn(*args, **kwargs)
+  File "/home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/ray/_private/client_mode_hook.py", line 103, in wrapper
+    return func(*args, **kwargs)
+  File "/home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/ray/_private/worker.py", line 2755, in get
+    values, debugger_breakpoint = worker.get_objects(object_refs, timeout=timeout)
+  File "/home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/ray/_private/worker.py", line 908, in get_objects
+    raise value
+ray.exceptions.OutOfMemoryError: Task was killed due to the node running low on memory.
+Memory on the node (IP: 140.221.79.23, ID: 9c95061e2d7edef3650dd0488a81cbe099139a9b6a2eda9581daa055) where the task (task ID: 9896f286cd41c495c7605a8d0bc715522de861a601000000, name=main_task, pid=2735044, memory used=0.76GB) was running was 1444.10GB / 1511.49GB (0.955411), which exceeds the memory usage threshold of 0.95. Ray killed this worker (ID: def40659e244768796c2235392f10208c5ca57c723e99fd7d62183b3) because it was the most recently scheduled task; to see more information about memory usage on this node, use `ray logs raylet.out -ip 140.221.79.23`. To see the logs of the worker, use `ray logs worker-def40659e244768796c2235392f10208c5ca57c723e99fd7d62183b3*out -ip 140.221.79.23. Top 10 memory users:
+PID	MEM(GB)	COMMAND
+2534001	617.24	/home/chia/mambaforge/envs/lstm_env/bin/python -c from multiprocessing.spawn import spawn_main; spaw...
+2505637	613.10	/home/chia/mambaforge/envs/lstm_env/bin/python -c from multiprocessing.spawn import spawn_main; spaw...
+2739061	13.15	ray::WorkerDict.actor_rollout_generate_sequences
+2739062	12.95	ray::WorkerDict.actor_rollout_generate_sequences
+2739060	12.83	ray::WorkerDict.actor_rollout_generate_sequences
+2737052	12.83	ray::WorkerDict.actor_rollout_generate_sequences
+2739057	12.76	ray::WorkerDict.actor_rollout_generate_sequences
+2739059	12.70	ray::WorkerDict.actor_rollout_generate_sequences
+2739058	12.64	ray::WorkerDict.actor_rollout_generate_sequences
+2739056	12.57	ray::WorkerDict.actor_rollout_generate_sequences
+Refer to the documentation on how to address the out of memory issue: https://docs.ray.io/en/latest/ray-core/scheduling/ray-oom-prevention.html. Consider provisioning more memory on this node or reducing task parallelism by requesting more CPUs per task. To adjust the kill threshold, set the environment variable `RAY_memory_usage_threshold` when starting Ray. To disable worker killing, set the environment variable `RAY_memory_monitor_refresh_ms` to zero.
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+[36m(WorkerDict pid=2739062)[0m /home/chia/mambaforge/envs/verl/lib/python3.10/site-packages/torch/distributed/fsdp/fully_sharded_data_parallel.py:689: FutureWarning: FSDP.state_dict_type() and FSDP.set_state_dict_type() are being deprecated. Please use APIs, get_state_dict() and set_state_dict(), which can support different parallelisms, FSDP1, FSDP2, DDP. API doc: https://pytorch.org/docs/stable/distributed.checkpoint.html#torch.distributed.checkpoint.state_dict.get_state_dict .Tutorial: https://pytorch.org/tutorials/recipes/distributed_checkpoint_recipe.html .[32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2739062)[0m   warnings.warn([32m [repeated 7x across cluster][0m
+[36m(WorkerDict pid=2739061)[0m kwargs: {'n': 1, 'logprobs': 1, 'max_tokens': 8192, 'detokenize': False, 'temperature': 0.7, 'top_k': -1, 'top_p': 1, 'ignore_eos': False}[32m [repeated 7x across cluster][0m

@@ -12,10 +12,8 @@ import torch
 from transformers import AutoTokenizer
 from verl import DataProto
 from verl.protocol import DataProtoItem
-
 from absolute_zero_reasoner.rewards.custom_evaluate import get_format_reward, extract_answer, extract_thought
 from absolute_zero_reasoner.utils.logging_utils.stdout import PrettyPrinter
-from absolute_zero_reasoner.utils.pseudo_chain_processor import create_execution_only_processor
 
 
 class BioReasoningRewardManager:
@@ -34,9 +32,6 @@ class BioReasoningRewardManager:
         output_path: str,
         debug: bool = False,
         max_prompt_length: int = 8192,
-        bvbrc_timeout: int = 30,
-        enable_pseudo_chain: bool = True,
-        max_fix_iterations: int = 3,
         boxed_retry: bool = False,
 
     ):
@@ -50,15 +45,8 @@ class BioReasoningRewardManager:
         self.debug = debug
         self.boxed_retry = boxed_retry
         
-        # Pseudo-chain processing
-        self.enable_pseudo_chain = enable_pseudo_chain
-        self.max_fix_iterations = max_fix_iterations
-        if self.enable_pseudo_chain:
-            self.pseudo_chain_processor = create_execution_only_processor(
-                bvbrc_timeout=bvbrc_timeout
-            )
-        else:
-            self.pseudo_chain_processor = None
+        # Remove pseudo-chain processing from reward manager
+        # This should be handled separately as an action retry system
         
 
     
@@ -98,17 +86,9 @@ class BioReasoningRewardManager:
             # If splitter is empty, use the entire text
             generation = non_special_tokens_sequences_str.strip().strip('\"\'')
         
-        # Process with pseudo-chain if enabled
-        if self.enable_pseudo_chain and self.pseudo_chain_processor:
-            try:
-                processed_generation = self.pseudo_chain_processor.process_response(
-                    generation, user_query, max_iterations=self.max_fix_iterations
-                )
-            except Exception as e:
-                PrettyPrinter.status("PSEUDO_CHAIN", f"Processing failed: {str(e)}", "warning")
-                processed_generation = generation
-        else:
-            processed_generation = generation
+        # No pseudo-chain processing in reward manager
+        # Just evaluate the generation as-is
+        processed_generation = generation
         
         # Extract content and thought
         extracted_content = extract_answer(
@@ -248,12 +228,13 @@ class BioReasoningRewardManager:
                     if metrics['successful_executions'] > 0:
                         execution_reward += 0.2
                 else:
-                    # Fall back to execution success rate if no ground truth
-                    execution_reward = metrics['execution_success_rate'] * 0.5
+                    # No ground truth available - give minimal reward only for execution
+                    # Don't give large rewards for bogus API calls that happen to execute
+                    execution_reward = 0.0
                     
-                    # Bonus for having any successful executions
+                    # Very small bonus for successful execution format (but not content)
                     if metrics['successful_executions'] > 0:
-                        execution_reward += 0.3
+                        execution_reward += 0.1  # Reduced from 0.3
             else:
                 # Penalty for having actions but no execution results
                 execution_reward = -0.2
@@ -348,11 +329,9 @@ class BioReasoningRewardManager:
     def _verify_with_mode(self, actual: Any, expected: Any, verification_mode: str) -> float:
         """Apply verification strategy based on mode"""
         
-        if verification_mode == "exact":
-            return 1.0 if str(actual).strip() == str(expected).strip() else 0.0
-            
-        elif verification_mode == "boxed":
-            # Extract from \boxed{} format
+        if verification_mode == "exact" or verification_mode == "boxed":
+            # Both "exact" and "boxed" use the same boxed extraction logic for bio reasoning
+            # Extract from \boxed{} format using original math functions
             from absolute_zero_reasoner.rewards.custom_evaluate import last_boxed_only_string
             
             actual_boxed = last_boxed_only_string(str(actual))
@@ -581,8 +560,24 @@ class BioReasoningRewardManager:
             for key, value in metrics.items():
                 all_scores[key].append(value)
             
-            # Track correct predictions
-            if reward > 0.5:  # Threshold for "correct"
+            # Track correct predictions - only when answer similarity is high
+            actual_results = self._extract_execution_results(data_dict['processed_generation'])
+            expected_answer = data_dict.get('ground_truth')
+            is_correct = False
+            
+            if expected_answer is not None and actual_results is not None:
+                verification_mode = data_dict.get('extra_info', {}).get('verification_mode', 'auto')
+                expected_raw = data_dict.get('extra_info', {}).get('raw_answer', expected_answer)
+                answer_similarity = self._compute_soft_answer_similarity(actual_results, expected_raw, verification_mode)
+                
+                # Use appropriate threshold based on verification mode
+                # Both 'exact' and 'boxed' require perfect matches for bio reasoning
+                if verification_mode in ['exact', 'boxed', 'dict_exact', 'list_unordered']:
+                    is_correct = answer_similarity >= 1.0  # Must be perfect match
+                else:
+                    is_correct = answer_similarity > 0.8  # Allow some similarity for partial modes
+            
+            if is_correct:
                 correct_predictions.append(data_dict)
         
         # Compute aggregate scores

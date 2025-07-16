@@ -3,14 +3,14 @@
 
 data:
   tokenizer: null
-  train_files: data/bio/train.parquet
-  val_files: data/bio/test.parquet
+  train_files: data/bio_llm/bio_llm_questions.parquet
+  val_files: data/bio_llm/bio_llm_questions.parquet
   prompt_key: prompt
   max_prompt_length: 2048  # Increased for better context
-  max_response_length: 2048  # Increased to match successful test results
+  max_response_length: 8192  # Boosted higher to allow very long, detailed answers
   max_validation_prompt_length: 2048
-  train_batch_size: 32  # Increased for 8 GPUs
-  val_batch_size: 32
+  train_batch_size: 16  # Must be divisible by 8 GPUs
+  val_batch_size: 16   # Must be divisible by 8 GPUs
   return_raw_input_ids: False
   return_raw_chat: True  # Enable chat format for bio reasoning
   shuffle: True
@@ -28,9 +28,9 @@ actor_rollout_ref:
     strategy: fsdp
     ppo_mini_batch_size: 32  # Increased for 8 GPUs
     ppo_micro_batch_size: null # will be deprecated, use ppo_micro_batch_size_per_gpu
-    ppo_micro_batch_size_per_gpu: 4
+    ppo_micro_batch_size_per_gpu: 2  # Reduced for memory savings
     use_dynamic_bsz: False
-    ppo_max_token_len_per_gpu: 16384  # Increased for 8 GPUs
+    ppo_max_token_len_per_gpu: 18432
     grad_clip: 1.0
     clip_ratio: 0.2
     entropy_coeff: 0.001
@@ -39,7 +39,7 @@ actor_rollout_ref:
     shuffle: False
     ulysses_sequence_parallel_size: 1
     optim:
-      lr: 1e-5  # Increased from 1e-6 for actual learning
+      lr: 1e-6  # Learning rate for training
       lr_warmup_steps_ratio: 0.
       min_lr_ratio: null
       warmup_style: constant
@@ -58,28 +58,28 @@ actor_rollout_ref:
       wrap_policy:
         min_num_params: 0
     log_prob_micro_batch_size: null # will be deprecated, use log_prob_micro_batch_size_per_gpu
-    log_prob_micro_batch_size_per_gpu: 4
+    log_prob_micro_batch_size_per_gpu: 2  # Reduced for memory savings
     log_prob_use_dynamic_bsz: ${actor_rollout_ref.actor.use_dynamic_bsz}
     log_prob_max_token_len_per_gpu: ${actor_rollout_ref.actor.ppo_max_token_len_per_gpu}
     ulysses_sequence_parallel_size: ${actor_rollout_ref.actor.ulysses_sequence_parallel_size}
   rollout:
     name: vllm
-    temperature: 1.0
+    temperature: 0.7
     top_k: -1
     top_p: 1
     prompt_length: ${data.max_prompt_length}
     response_length: ${data.max_response_length}
     dtype: bfloat16
-    gpu_memory_utilization: 0.2  # Conservative for 8 GPUs with other processes
+    gpu_memory_utilization: 0.5
     ignore_eos: False
     enforce_eager: True
     free_cache_engine: True
     load_format: dummy_dtensor
-    tensor_model_parallel_size: 2  # Increased for 8 GPUs
-    max_num_batched_tokens: 8192  # Increased for 8 GPUs
-    max_num_seqs: 1024  # Increased for 8 GPUs
+    tensor_model_parallel_size: 1
+    max_num_batched_tokens: 8192  # Throughput optimization, not directly related to sequence length
+    max_num_seqs: 512  # Reduced for memory savings
     log_prob_micro_batch_size: null # will be deprecated, use log_prob_micro_batch_size_per_gpu
-    log_prob_micro_batch_size_per_gpu: 4
+    log_prob_micro_batch_size_per_gpu: 2  # Reduced for memory savings
     log_prob_use_dynamic_bsz: ${actor_rollout_ref.actor.use_dynamic_bsz}
     log_prob_max_token_len_per_gpu: ${actor_rollout_ref.actor.ppo_max_token_len_per_gpu}
     disable_log_stats: True
@@ -90,13 +90,13 @@ actor_rollout_ref:
 critic:
   strategy: fsdp
   optim:
-    lr: 1e-5
+    lr: 1e-6
     lr_warmup_steps_ratio: 0.
     min_lr_ratio: null
     warmup_style: constant
     total_training_steps: -1
   model:
-    path: deepseek-ai/deepseek-llm-7b-chat
+    path: deepseek-ai/DeepSeek-R1-Distill-Llama-8B
     tokenizer_path: ${actor_rollout_ref.model.path}
     override_config: { }
     external_lib: ${actor_rollout_ref.model.external_lib}
@@ -111,11 +111,11 @@ critic:
       fsdp_size: -1
   ppo_mini_batch_size: ${actor_rollout_ref.actor.ppo_mini_batch_size}
   ppo_micro_batch_size: null # will be deprecated, use ppo_micro_batch_size_per_gpu
-  ppo_micro_batch_size_per_gpu: 4
-  forward_micro_batch_size: ${critic.ppo_micro_batch_size}
+  ppo_micro_batch_size_per_gpu: 2  # Reduced for memory savings
+  forward_micro_batch_size: ${critic.ppo_micro_batch_size_per_gpu}
   forward_micro_batch_size_per_gpu: ${critic.ppo_micro_batch_size_per_gpu}
   use_dynamic_bsz: ${actor_rollout_ref.actor.use_dynamic_bsz}
-  ppo_max_token_len_per_gpu: 24576  # Increased for 8 GPUs
+  ppo_max_token_len_per_gpu: 27648
   forward_max_token_len_per_gpu: ${critic.ppo_max_token_len_per_gpu}
   ulysses_sequence_parallel_size: 1
   ppo_epochs: ${actor_rollout_ref.actor.ppo_epochs}
@@ -136,7 +136,7 @@ reward_model:
       param_offload: False
       fsdp_size: -1
   micro_batch_size: null # will be deprecated, use micro_batch_size_per_gpu
-  micro_batch_size_per_gpu: 4
+  micro_batch_size_per_gpu: 2  # Reduced for memory savings
   max_length: null
   ulysses_sequence_parallel_size: 1 # sp size
   use_dynamic_bsz: ${critic.use_dynamic_bsz}
@@ -158,7 +158,8 @@ trainer:
   total_epochs: 100  # Increased for more learning steps
   total_training_steps: null
   project_name: bio_reasoning
-  experiment_name: bvbrc_pseudo_chain
+  experiment_name: bio_llm_only_long_response
+  disable_batch_balancing: False  # Enable _balance_batch
   logger: [ 'console', 'wandb' ]
   val_generations_to_log_to_wandb: 5
   nnodes: 1
@@ -177,9 +178,9 @@ trainer:
   wandb_tags: null
 
 reward_fn:
-  extraction_type: none  # Bio reasoning doesn't need math extraction
+  extraction_type: boxed
   math_metric: deepscaler
-  splitter: "Assistant:"  # Standard chat format splitter
+  splitter: "Assistant:"
   boxed_retry: False
 
 azr:
@@ -187,10 +188,10 @@ azr:
   executor_max_workers: 1
   executor_cleanup_frequency: 1
   problem_types:
-    - bio_bvbrc  # Only bio reasoning
-  manual_bio_solutions_path: data/bio_manual_solutions.json  # Path to manually curated solutions for bootstrapping
-  pred_data_mix_strategy: "max_new"  # [uniform_total, max_new, half_new, step]
-  gen_data_probabilities_strategy: "uniform"  # [uniform, step]
+    - mc
+  manual_bio_solutions_path: null
+  pred_data_mix_strategy: "max_new"
+  gen_data_probabilities_strategy: "uniform"
   past_epoch_window: 1
   seed_dataset: null
   error_seed_dataset: null
@@ -199,10 +200,10 @@ azr:
   output_code_f_seed_path: null
   code_f_seed_dataset: null
   pretrain_pred_steps: 0
-  train_propose: False  # Added missing field
-  executor: bvbrc_shell  # Use BV-BRC shell executor
+  train_propose: False
+  executor: qwq
   ast_check: True
-  execute_max_timeout: 10  # seconds
+  execute_max_timeout: 10
   random_print_max_programs: 3
   data_selection_strategy:
     io_n: 6
@@ -257,7 +258,7 @@ azr:
     extract_code_block: False  # Bio reasoning doesn't need code extraction
     code_f_reward_type: binary # [accuracy, binary]
     generation_reward_config:
-      format_reward: True
+      format_reward: False
       reject_multiple_functions: True
       reject_test_input_in_code: False
       f_replace_location: not_first # [not_first, any_last, any_first, not_last]
@@ -296,7 +297,6 @@ azr:
         coef: 0.0
         max: 0.5
         hierarchical: False
-    reward_function: bio_bvbrc_reward
     reward_model_path: null
     reward_model_name: null
     num_examine: 3  # Added missing field

@@ -32,7 +32,7 @@ from verl.trainer.ppo.ray_trainer import (
 from verl.protocol import pad_dataproto_to_divisor, unpad_dataproto, DataProto
 
 from absolute_zero_reasoner.utils.tracking import ReasonRLTracking
-from absolute_zero_reasoner.data_construction.constructor import get_gen_code_io_data, get_pred_code_io_data, get_gen_bio_bvbrc_prompt
+from absolute_zero_reasoner.data_construction.constructor import get_gen_code_io_data, get_pred_code_io_data, get_gen_bio_bvbrc_prompt, get_gen_bio_llm_prompt
 from absolute_zero_reasoner.trainer.ppo.reason_rl_ray_trainer import ReasonRLRayPPOTrainer
 from absolute_zero_reasoner.utils.dataset.rl_dataset import RLHFDataset
 from absolute_zero_reasoner.rewards.code_reward import parse_code_input_output, parse_inputs_message
@@ -614,7 +614,7 @@ class DatasetManager:
 
 
 class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
-    _supported_tasks = {'code_i', 'code_o', 'code_e', 'code_f', 'bio_bvbrc'}
+    _supported_tasks = {'code_i', 'code_o', 'code_e', 'code_f', 'bio_bvbrc', 'bio_llm', 'mc'}
     def __init__(self, past_epoch_window: int = 10, *args, **kwargs):
         super().__init__(*args, **kwargs)
         assert self.config.actor_rollout_ref.rollout.n == 1, "CodeIO only supports n=1 for now"
@@ -933,6 +933,41 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         assert len(bio_dataloader) >= 1
         return iter(bio_dataloader)
 
+    def _create_train_bio_llm_dataloader(self, data_len: int) -> DataLoader:
+        """
+        Create a dataloader for bio_llm training data from a parquet file.
+        This is for pure LLM-based bio-reasoning without the BV-BRC execution pipeline.
+        """
+        # Create dataset using standard RLHFDataset
+        rlhf_dataset = RLHFDataset(
+            parquet_files=self.config.data.train_files,
+            tokenizer=self.tokenizer,
+            prompt_key='prompt',
+            max_prompt_length=self.config.data.max_prompt_length,
+            filter_prompts=True,
+            return_raw_chat=self.config.data.get('return_raw_chat', False),
+            truncation='error'
+        )
+
+        sampler = RandomSampler(data_source=rlhf_dataset)
+        
+        PrettyPrinter.status(
+            "DATA", 
+            f"Bio LLM training dataloader created with {len(rlhf_dataset)} samples.", 
+            "info"
+        )
+        
+        bio_llm_dataloader = DataLoader(
+            dataset=rlhf_dataset,
+            batch_size=data_len,
+            drop_last=True,
+            shuffle=False,
+            collate_fn=collate_fn,
+            sampler=sampler
+        )
+        
+        return iter(bio_llm_dataloader)
+
     def _load_manual_bio_solutions(self, solutions_path: str) -> List[Dict]:
         """
         Load manually curated bio reasoning solutions to seed the bio_reasoning dataset.
@@ -1032,6 +1067,59 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         with _timer(f'gen/{problem_type}', timing_raw):
             gen_batch_output = self.actor_rollout_wg.generate_sequences(gen_batch)
 
+        # Process BV-BRC actions if this is a bio task
+        if problem_type == 'gen_bio_bvbrc':
+            with _timer(f'bvbrc_action_processing/{problem_type}', timing_raw):
+                from absolute_zero_reasoner.utils.bvbrc_action_processor import BVBRCActionProcessor
+                
+                action_processor = BVBRCActionProcessor(
+                    bvbrc_timeout=self.config.azr.execute_max_timeout,
+                    max_retries=2
+                )
+                
+                # Step 1: Decode original responses and process them to get a list of new strings
+                original_responses_decoded = self.tokenizer.batch_decode(gen_batch_output.batch['responses'], skip_special_tokens=True)
+                processed_strings = []
+                problems = gen_batch.non_tensor_batch.get('problem', [''])
+                
+                for i, response_text in enumerate(original_responses_decoded):
+                    user_query = problems[i % len(problems)] if problems else ''
+                    try:
+                        processed_response_text = action_processor.process_response(response_text, user_query)
+                        processed_strings.append(processed_response_text)
+                    except RuntimeError as e:
+                        PrettyPrinter.status("BVBRC_PROC", f"Processing failed, using original: {str(e)}", "warning")
+                        processed_strings.append(response_text) # Use original on failure
+                
+                # Step 2: Batch-tokenize the new strings to get new, consistent response tensors
+                new_response_encoding = self.tokenizer(
+                    processed_strings,
+                    padding=True,
+                    truncation=True,
+                    max_length=self.config.data.max_response_length,
+                    return_tensors="pt"
+                ).to(gen_batch_output.batch['responses'].device)
+                
+                # Step 3: Replace the old response tensors in the generation output
+                gen_batch_output.batch['responses'] = new_response_encoding['input_ids']
+                # The tokenizer creates a new attention mask for the responses, which is exactly what we need.
+                # It will correctly reflect the new lengths and padding.
+                gen_batch_output.batch['attention_mask'] = new_response_encoding['attention_mask']
+                
+                # Log generated responses if enabled in config
+                if self.config.trainer.get('log_generations', False):
+                    log_file_path = os.path.join(self.config.trainer.default_local_dir, self.config.trainer.log_generations_file)
+                    os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+                    with open(log_file_path, 'a', encoding='utf-8') as f:
+                        f.write(f"--- Global Step: {self.global_steps} ---\n")
+                        for i, (prompt, text) in enumerate(zip(problems, processed_strings)):
+                            f.write(f"--- Sample {i} ---\n")
+                            f.write(f"Prompt: {prompt}\n")
+                            f.write(f"Response: {text}\n\n")
+                        f.write(f"--- End of Step ---\n\n")
+                
+                PrettyPrinter.status("BVBRC_PROCESSOR", f"Re-tokenized {len(processed_strings)} responses", "success")
+
         batch.non_tensor_batch['uid'] = np.array([str(uuid.uuid4()) for _ in range(len(batch.batch))],
                                                 dtype=object)
         # repeat to align with repeated responses in rollout
@@ -1039,7 +1127,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
         batch = batch.union(gen_batch_output)
 
         # balance the number of valid tokens on each dp rank
-        self._balance_batch(batch, metrics=metrics)
+        if not self.config.trainer.get('disable_batch_balancing', False):
+            self._balance_batch(batch, metrics=metrics)
 
         # compute global_valid tokens
         batch.meta_info['global_token_num'] = torch.sum(batch.batch['attention_mask'], dim=-1).tolist()
@@ -1091,9 +1180,6 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     output_path=self.config.trainer.default_local_dir,
                     debug=self.config.trainer.debug,
                     max_prompt_length=self.config.data.max_prompt_length,
-                    bvbrc_timeout=self.config.azr.execute_max_timeout,
-                    enable_pseudo_chain=True,
-                    max_fix_iterations=3,
                     boxed_retry=self.config.reward_fn.boxed_retry,
                 )
 
@@ -1114,6 +1200,12 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 reward_fn_kwargs = {
                     'data': batch, 
                     'problem_type': problem_type, 
+                    'executor': executor,
+                }
+            elif problem_type == 'mc':
+                reward_fn_kwargs = {
+                    'data': batch,
+                    'problem_type': 'mc',
                     'executor': executor,
                 }
             elif problem_type == 'gen_bio_bvbrc':
@@ -1216,6 +1308,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                         f"Added {len(processed_bio_traces)} successful bio reasoning traces to dataset", 
                         "success"
                     )
+            elif problem_type == 'mc':
+                pass # No programs to add for mc tasks
             else:
                 raise ValueError(f'Invalid problem type: {problem_type}')
 
@@ -1927,6 +2021,11 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                 gen_bio_bvbrc_dataloader = self._create_train_bio_bvbrc_dataloader(
                     data_len=data_len,
                 )
+            
+            if 'mc' in self.config.azr.problem_types:
+                gen_mc_dataloader = self._create_train_mc_dataloader(
+                    data_len=data_len,
+                )
             for _ in range(self.config.azr.data_selection_strategy.update_iteration):
                 metrics = {}
                 timing_raw = {}
@@ -1992,6 +2091,21 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                         batch: DataProto = DataProto.from_single_dict(batch_dict)
                         batch, metrics = self._compute_batch(batch, metrics, timing_raw, problem_type='gen_bio_bvbrc', executor=self._executor)
                         batches[f'gen_bio_bvbrc'] = batch
+
+                    if 'mc' in self.config.azr.problem_types:
+                        batch_dict = next(gen_mc_dataloader)
+                        batch: DataProto = DataProto.from_single_dict(batch_dict)
+                        batch, metrics = self._compute_batch(batch, metrics, timing_raw, problem_type='mc', executor=self._executor)
+                        batches[f'mc'] = batch
+                        
+                        # Log one example per step for debugging
+                        if len(batch.batch['responses']) > 0:
+                            example_idx = 0
+                            input_text = self.tokenizer.decode(batch.batch['input_ids'][example_idx], skip_special_tokens=True)
+                            response_text = self.tokenizer.decode(batch.batch['responses'][example_idx], skip_special_tokens=True)
+                            PrettyPrinter.section_header("MC Training Example")
+                            PrettyPrinter.status("QUESTION", input_text, "info")
+                            PrettyPrinter.status("RESPONSE", f"'{response_text}' (length: {len(response_text)} chars)", "info")
 
                     # concatenate batches
                     batch = DataProto.concat(list(batches.values()))
@@ -2081,6 +2195,8 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     all_types.append('pred_code_f')
                 if 'bio_bvbrc' in self.config.azr.problem_types:
                     all_types.append('gen_bio_bvbrc')
+                if 'mc' in self.config.azr.problem_types:
+                    all_types.append('mc')
                 sep_batches = batch.chunk(len(all_types))
                 for sep_batch, problem_type in zip(sep_batches, all_types):
                     sep_metrics = compute_data_metrics(batch=sep_batch, use_critic=self.use_critic, tokenizer=self.tokenizer)
@@ -2215,7 +2331,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             test_batch = test_batch.union(test_output_gen_batch)
 
             # evaluate using reward_function
-            # For bio_bvbrc tasks, use the specialized reward manager
+            # Determine the correct problem type for validation
             if 'bio_bvbrc' in self.config.azr.problem_types and len(self.config.azr.problem_types) == 1:
                 # Use the bio reasoning reward manager for validation
                 from absolute_zero_reasoner.rewards.bio_bvbrc_reward_manager import BioReasoningRewardManager
@@ -2228,9 +2344,6 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     output_path=self.config.trainer.default_local_dir,
                     debug=self.config.trainer.debug,
                     max_prompt_length=self.config.data.max_validation_prompt_length,
-                    bvbrc_timeout=self.config.azr.execute_max_timeout,
-                    enable_pseudo_chain=True,
-                    max_fix_iterations=3,
                     boxed_retry=self.config.reward_fn.boxed_retry,
                 )
                 reward_tensor, eval_metrics, _, _ = bio_reward_manager(
@@ -2238,10 +2351,30 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     problem_type='gen_bio_bvbrc',
                     executor=self._executor,
                 )
-            else:
+            elif 'bio_llm' in self.config.azr.problem_types and len(self.config.azr.problem_types) == 1:
+                # For bio_llm tasks, use CodeIORewardManager with None problem type for QA
                 reward_tensor, eval_metrics, _, _ = self.val_reward_fn(
                     test_batch,
                     problem_type=None,
+                    executor=self._executor,
+                )
+            else:
+                # For mixed task types or other single task types, determine problem type from data
+                # Extract the problem type from the first data item's metric field
+                first_metric = test_batch[0].non_tensor_batch.get('extra_info', {}).get('metric', 'unknown')
+                if first_metric == 'mc':
+                    problem_type = 'mc'  # Multiple choice questions
+                elif any(task in self.config.azr.problem_types for task in ['code_i', 'code_o', 'code_e', 'code_f']):
+                    # For code tasks, use 'pred' as the base problem type
+                    # This assumes validation involves predicting properties of existing code
+                    problem_type = f"pred_{self.config.azr.problem_types[0]}"
+                else:
+                    # Fallback for other tasks if necessary
+                    problem_type = f"pred_{self.config.azr.problem_types[0]}"
+
+                reward_tensor, eval_metrics, _, _ = self.val_reward_fn(
+                    test_batch,
+                    problem_type=problem_type,
                     executor=self._executor,
                 )
             for k, v in eval_metrics.items():
@@ -2394,6 +2527,7 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
             code_dir.mkdir(parents=True, exist_ok=True)
             PrettyPrinter.status("Directory", f"Created new code directory at {code_dir}", "info")
 
+
     def scheduler_step(self):
         if self.config.azr.data_selection_strategy.composite_scheduler.enabled:
             # Update number of programs - calculate directly based on global steps
@@ -2426,5 +2560,131 @@ class CodeIORayPPOTrainer(ReasonRLRayPPOTrainer):
                     current_prob = self.config.azr.data_selection_strategy.composite_chance
                     self.config.azr.data_selection_strategy.composite_chance = new_prob
                     PrettyPrinter.status("Scheduler", f"Updated composite probability from {current_prob:.2f} to {new_prob:.2f}", "info")
+
+    def _create_train_mc_dataloader(self, data_len: int) -> DataLoader:
+        """
+        Create a dataloader for multiple-choice (mc) training data.
+        """
+        # Create dataset using standard RLHFDataset
+        rlhf_dataset = RLHFDataset(
+            parquet_files=self.config.data.train_files,
+            tokenizer=self.tokenizer,
+            prompt_key='prompt',
+            max_prompt_length=self.config.data.max_prompt_length,
+            filter_prompts=True,
+            return_raw_chat=self.config.data.get('return_raw_chat', False),
+            truncation='error'
+        )
+
+        sampler = RandomSampler(data_source=rlhf_dataset)
+
+        PrettyPrinter.status(
+            "DATA",
+            f"MC training dataloader created with {len(rlhf_dataset)} samples.",
+            "info"
+        )
+
+        mc_dataloader = DataLoader(
+            dataset=rlhf_dataset,
+            batch_size=data_len,
+            drop_last=True,
+            shuffle=False,
+            collate_fn=collate_fn,
+            sampler=sampler
+        )
+
+        return iter(mc_dataloader)
+
+    def _load_manual_bio_solutions(self, solutions_path: str) -> List[Dict]:
+        """
+        Load manually curated bio reasoning solutions to seed the bio_reasoning dataset.
+        
+        Expected format:
+        [
+          {
+            "question": "List all Pseudomonas aeruginosa genome IDs",
+            "reasoning_trace": "<think>I need to search...</think><action>search_genomes('Pseudomonas aeruginosa')</action>",
+            "execution_results": [...],
+            "answer": ["511145.12", "287.1", "208964.1"],
+            "success_metrics": {"execution_success_rate": 1.0, "reasoning_quality": 0.9}
+          }
+        ]
+        """
+        if solutions_path is None or not os.path.exists(solutions_path):
+            PrettyPrinter.status("INFO", f"No manual bio solutions found at {solutions_path}", "info")
+            return []
+        
+        with open(solutions_path, 'r') as f:
+            manual_solutions = json.load(f)
+        
+        PrettyPrinter.status("DATA", f"Loaded {len(manual_solutions)} manual bio reasoning solutions", "success")
+        return manual_solutions
+
+    def _seed_bio_reasoning_dataset(self):
+        """Seed the bio_reasoning dataset with manually curated solutions at startup"""
+        manual_solutions_path = self.config.azr.get('manual_bio_solutions_path', 'data/bio_manual_solutions.json')
+        manual_solutions = self._load_manual_bio_solutions(manual_solutions_path)
+        
+        if manual_solutions:
+            # Process manual solutions to match the expected format
+            processed_solutions = []
+            for solution in manual_solutions:
+                processed_solution = {
+                    'question': solution['question'],
+                    'reasoning_trace': solution['reasoning_trace'],
+                    'execution_results': solution.get('execution_results', []),
+                    'success_metrics': solution.get('success_metrics', {'execution_success_rate': 1.0}),
+                    'answer': solution['answer'],
+                    'ground_truth': solution['answer'],
+                    'source': 'manual_curation',
+                    'timestamp': time.time()
+                }
+                processed_solutions.append(processed_solution)
+            
+            # Add to bio_reasoning dataset
+            ray.get(self.dataset_manager.add_bio_reasoning_batch.remote(processed_solutions, 0))  # Step 0 for manual seeds
+            PrettyPrinter.status(
+                "DATA", 
+                f"Seeded bio_reasoning dataset with {len(processed_solutions)} manual solutions", 
+                "success"
+            )
+
+    def _process_bio_reasoning_traces(self, valid_programs: List[Dict]) -> List[Dict]:
+        """
+        Process successful bio reasoning traces for storage in the dataset.
+        
+        Args:
+            valid_programs: List of successful bio reasoning programs/traces
+            
+        Returns:
+            List of processed bio reasoning traces ready for dataset storage
+        """
+        processed_traces = []
+        
+        for program in valid_programs:
+            # Extract key components from the bio reasoning trace
+            trace_entry = {
+                'question': program.get('user_query', ''),
+                'reasoning_trace': program.get('processed_generation', ''),
+                'execution_results': program.get('execution_results', []),
+                'success_metrics': {
+                    'has_actions': program.get('has_actions', 0),
+                    'actions_executed': program.get('actions_executed', 0),
+                    'successful_executions': program.get('successful_executions', 0),
+                    'failed_executions': program.get('failed_executions', 0),
+                    'execution_success_rate': program.get('execution_success_rate', 0.0),
+                    'reasoning_quality': program.get('reasoning_quality', 0.0),
+                },
+                'answer': program.get('extracted_answer', ''),
+                'ground_truth': program.get('ground_truth', ''),
+                'data_source': 'bio_reasoning_generated',
+                'uid': program.get('uid', ''),
+            }
+            
+            processed_traces.append(trace_entry)
+        
+        return processed_traces
+
+
 
 

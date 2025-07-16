@@ -315,8 +315,11 @@ class ReasonRLRayPPOTrainer(RayPPOTrainer):
                     batch = batch.union(gen_batch_output)
 
                     # balance the number of valid tokens on each dp rank.
-                    pp.status("Processing", "Balancing batch across ranks", "info")
-                    self._balance_batch(batch, metrics=metrics)
+                    if not self.config.trainer.get('disable_batch_balancing', False):
+                        pp.status("Processing", "Balancing batch across ranks", "info")
+                        self._balance_batch(batch, metrics=metrics)
+                    else:
+                        pp.status("Processing", "Skipping batch balancing (disabled)", "info")
 
                     # compute global_valid tokens
                     batch.meta_info['global_token_num'] = torch.sum(batch.batch['attention_mask'], dim=-1).tolist()
